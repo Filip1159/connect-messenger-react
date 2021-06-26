@@ -1,0 +1,68 @@
+.leftPanel {
+    background-color: #555;
+    font-size: 26px;
+    display: flex;
+    flex-direction: column;
+    width: 450px;
+    height: 100%;
+    z-index: 1;
+    cursor: default;
+}
+
+.leftPanel__convItem {
+    background-color: #eee;
+    width: 100%;
+    transition: .2s;
+    display: flex;
+    flex-direction: row;
+    cursor: pointer;
+}
+
+.leftPanel__convItem:hover {
+    border-left: 5px solid #E7EB59;
+    border-top-right-radius: 5px;
+    border-bottom-right-radius: 5px;
+    transition: .2s;
+}
+
+.active {
+    background-color: #555;
+    color: #E7EB59;
+    font-size: 30px;
+}
+
+.active:hover {  /* only to cancel leftPanel__convItem hover effect */
+    border-left: none
+}
+
+.active .leftPanel__lastMessage {
+    display: none;
+}
+
+.beforeActive {
+    border-bottom-right-radius: 30px;
+}
+
+.afterActive {
+    border-top-right-radius: 30px;
+}
+
+.leftPanel__foo {  /* empty div that makes leftPanel reach bottom of page */
+    background-color: #eee;
+    flex-grow: 1;
+}
+
+.leftPanel__nameSurname {
+    font-weight: bold;
+    letter-spacing: 1px;
+    margin-top: 20px;
+    margin-left: 20px;
+}
+
+.leftPanel__lastMessage {
+    font-size: 13px;
+    font-weight: lighter;
+    color: #555;
+    margin-top: 20px;
+    margin-left: 20px;
+}

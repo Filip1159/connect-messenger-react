@@ -1,0 +1,52 @@
+.messages {
+    background: #555;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    font-size: 18px;
+    height: 100%;
+    width: 100%;
+}
+
+.messages__container {
+    display: flex;    /* make singleMessages fit to their content */
+    flex-direction: column;
+    color: white;
+    width: 100%;
+    max-height: calc(100vh - 145px);
+    overflow-y: scroll;
+}
+
+::-webkit-scrollbar {
+    width: 15px;
+}
+
+::-webkit-scrollbar-track {
+    background: #000;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #E7EB59;
+    border: 2px solid #000;
+}
+
+.messages__singleMessage {
+    border-radius: 10px;
+    letter-spacing: 1px;
+    padding: 10px;
+    margin: 10px;
+    max-height: 40px;
+    cursor: default;
+}
+
+.receivedMsg {
+    background: #111;
+    margin-left: 10px;
+    margin-right: auto;
+}
+
+.myMsg {
+    background: #E7EB59;
+    margin-right: 10px;
+    margin-left: auto;
+}

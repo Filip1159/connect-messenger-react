@@ -1,0 +1,38 @@
+.rightPanel {
+    background: white;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    flex-grow: 1;
+    width: 450px;
+    padding: 40px 20px 20px 40px;
+    cursor: default;
+}
+
+.rightPanel__userData {
+    display: flex;
+    flex-direction: column;
+}
+
+.rightPanel__userAvatar {
+    width: 200px;
+    height: 200px;
+    border: 5px solid #E7EB59;
+}
+
+.rightPanel__nameSurname {
+    font-weight: bold;
+    font-size: 26px;
+    margin-top: 40px;
+}
+
+.rightPanel__username {
+    font-weight: lighter;
+    font-size: 15px;
+    color: grey;
+}
+
+.rightPanel__springLogo {
+    width: 350px;
+    height: 350px;
+}

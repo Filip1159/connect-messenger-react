@@ -1,0 +1,22 @@
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #E7EB59;
+    height: 65px;
+    width: 100%;
+}
+
+.header__title {
+    font-size: 50px;
+    color: #fff;
+    padding-left: 30px;
+    cursor: default;
+}
+
+.header__logoutBtn {
+    width: 45px;
+    height: 45px;
+    padding-right: 30px;
+    cursor: pointer;
+}
