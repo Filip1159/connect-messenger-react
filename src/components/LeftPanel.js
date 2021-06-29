@@ -9,27 +9,29 @@ const LeftPanel = () => {
 
     return (
         <div className="leftPanel">
-            <Search roundedCorner={active === 0}/>{
-                conversations.map((c, i) => {
-                    let className = "leftPanel__convItem";
-                    switch (i) {
-                        case active - 1: className += " beforeActive"; break;
-                        case active: className += " active"; break;
-                        case active + 1: className += " afterActive"; break;
-                        default: // nothing to do
-                    }
-                    return <Conversation
-                                conversation={c}
-                                className={className}
-                                onClick={() => dispatch({ type: "SET_ACTIVE", newActive: i })}
-                                key={i}
-                            />;
-                })
-            }
-            <div
-                className="leftPanel__foo"
-                style={active === conversations?.length - 1 ? {borderTopRightRadius: '20px'} : {}}
-            />
+            <div className="leftPanel__flipped">
+                <Search roundedCorner={active === 0}/>{
+                    conversations.map((c, i) => {
+                        let className = "leftPanel__convItem";
+                        switch (i) {
+                            case active - 1: className += " beforeActive"; break;
+                            case active: className += " active"; break;
+                            case active + 1: className += " afterActive"; break;
+                            default: // nothing to do
+                        }
+                        return <Conversation
+                                    conversation={c}
+                                    className={className}
+                                    onClick={() => dispatch({ type: "SET_ACTIVE", newActive: i })}
+                                    key={i}
+                                />;
+                    })
+                }
+                <div
+                    className="leftPanel__foo"
+                    style={active === conversations?.length - 1 ? {borderTopRightRadius: '20px'} : {}}
+                />
+            </div>
         </div>
     )
 }

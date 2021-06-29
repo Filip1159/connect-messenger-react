@@ -2,16 +2,13 @@
     background: white;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
     flex-grow: 1;
-    width: 450px;
+    max-height: calc(100vh - 125px);
+    min-width: 350px;
+    max-width: 350px;
     padding: 40px 20px 20px 40px;
     cursor: default;
-}
-
-.rightPanel__userData {
-    display: flex;
-    flex-direction: column;
+    overflow-y: scroll;
 }
 
 .rightPanel__userAvatar {
@@ -30,9 +27,4 @@
     font-weight: lighter;
     font-size: 15px;
     color: grey;
-}
-
-.rightPanel__springLogo {
-    width: 350px;
-    height: 350px;
 }

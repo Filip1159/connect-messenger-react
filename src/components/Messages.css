@@ -1,5 +1,5 @@
 .messages {
-    background: #555;
+    background: grey;
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
@@ -9,12 +9,17 @@
 }
 
 .messages__container {
-    display: flex;    /* make singleMessages fit to their content */
+    display: flex;
+}
+
+.messages__container__displayContent {
+    display: flex;    /* make singleMessages fit their content */
     flex-direction: column;
     color: white;
     width: 100%;
     max-height: calc(100vh - 145px);
     overflow-y: scroll;
+    padding-right: 30px;
 }
 
 ::-webkit-scrollbar {
@@ -22,20 +27,20 @@
 }
 
 ::-webkit-scrollbar-track {
-    background: #000;
+    background: black;
 }
 
 ::-webkit-scrollbar-thumb {
     background: #E7EB59;
-    border: 2px solid #000;
+    border: 2px solid black;
 }
 
 .messages__singleMessage {
-    border-radius: 10px;
+    border-radius: 20px;
     letter-spacing: 1px;
-    padding: 10px;
+    padding: 10px 20px;
     margin: 10px;
-    max-height: 40px;
+    max-width: 60%;
     cursor: default;
 }
 
@@ -49,4 +54,31 @@
     background: #E7EB59;
     margin-right: 10px;
     margin-left: auto;
+}
+
+.topSticky.myMsg{
+    margin-top: 1px;
+    border-top-right-radius: 0;
+}
+
+.topSticky.receivedMsg{
+    margin-top: 1px;
+    border-top-left-radius: 0;
+}
+
+.bottomSticky.myMsg {
+    margin-bottom: 1px;
+    border-bottom-right-radius: 0;
+}
+
+.bottomSticky.receivedMsg {
+    margin-bottom: 1px;
+    border-bottom-left-radius: 0;
+}
+
+.messages__time {
+    font-size: 12px;
+    text-align: center;
+    color: #E7EB59;
+    margin-top: 15px;
 }

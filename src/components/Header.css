@@ -4,7 +4,9 @@
     align-items: center;
     background-color: #E7EB59;
     height: 65px;
+    min-height: 65px;
     width: 100%;
+    z-index: 5;
 }
 
 .header__title {
