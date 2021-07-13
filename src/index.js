@@ -6,12 +6,10 @@ import AuthContextProvider from "./contexts/AuthContext";
 import ConversationContextProvider from "./contexts/ConversationContext";
 
 ReactDOM.render(
-  <React.StrictMode>
-    <AuthContextProvider>
-      <ConversationContextProvider>
-        <App />
-      </ConversationContextProvider>
-    </AuthContextProvider>
-  </React.StrictMode>,
+  <AuthContextProvider>
+    <ConversationContextProvider>
+      <App />
+    </ConversationContextProvider>
+  </AuthContextProvider>,
   document.getElementById("root")
 );

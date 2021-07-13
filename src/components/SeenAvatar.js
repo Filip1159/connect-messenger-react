@@ -15,7 +15,7 @@ const SeenAvatar = ({ bottom, opacity }) => {
             alt="seen avatar"
             style={{
                 bottom: `${bottom}px`,
-                opacity  /* go from top to bottom, from full color to full transparent */
+                opacity: Number.isNaN(opacity) ? 0 : opacity  /* go from top to bottom, from full color to full transparent */
             }}
         />
     )

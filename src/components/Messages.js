@@ -1,6 +1,7 @@
 import React, { useContext, useEffect, useState } from "react";
 import { AuthContext } from "../contexts/AuthContext";
 import { ConversationContext } from "../contexts/ConversationContext";
+import DateFormatter from "../helpers/DateFormatter";
 import "./Messages.css";
 import NewMessageInput from "./NewMessageInput";
 import SeenAvatarsPanel from "./SeenAvatarsPanel";
@@ -25,23 +26,13 @@ const Messages = () => {
                     onScroll={e => setBottom(document.getElementById("lastMessage").getBoundingClientRect().bottom)}
                 >{
                     conversations[active]?.messages?.map((m, i) => {
-                        const year = m.time.substring(0, 4);
-                        const month = m.time.substring(5, 7);
-                        const day = m.time.substring(8, 10);
-                        const hour = m.time.substring(11, 13);
-                        const minute = m.time.substring(14, 16);
-                        const date = new Date(year, month, day, hour, minute);
+                        const date = DateFormatter.sqlToDateObject(m.time);
 
                         let prevDate;
                         if (i === 0) prevDate = new Date(1970);
                         else {
                             const prevM = conversations[active].messages[i-1];
-                            const prevYear = prevM.time.substring(0, 4);
-                            const prevMonth = prevM.time.substring(5, 7);
-                            const prevDay = prevM.time.substring(8, 10);
-                            const prevHour = prevM.time.substring(11, 13);
-                            const prevMinute = prevM.time.substring(14, 16);
-                            prevDate = new Date(prevYear, prevMonth, prevDay, prevHour, prevMinute);
+                            prevDate = DateFormatter.sqlToDateObject(prevM.time);
                         }
 
                         const len = conversations[active].messages.length;
@@ -49,12 +40,7 @@ const Messages = () => {
                         if (i === len - 1) nextDate = new Date(2038, 1, 19);
                         else {
                             const nextM = conversations[active].messages[i+1];
-                            const nextYear = nextM.time.substring(0, 4);
-                            const nextMonth = nextM.time.substring(5, 7);
-                            const nextDay = nextM.time.substring(8, 10);
-                            const nextHour = nextM.time.substring(11, 13);
-                            const nextMinute = nextM.time.substring(14, 16);
-                            nextDate = new Date(nextYear, nextMonth, nextDay, nextHour, nextMinute);
+                            nextDate = DateFormatter.sqlToDateObject(nextM.time);
                         }
 
                         const smallTimeDifferenceBefore = (date.getTime() - prevDate.getTime()) < 5*60*1000;
@@ -81,22 +67,25 @@ const Messages = () => {
                             if (nextSenderId === m.userId && smallTimeDifferenceAfter) className += " bottomSticky";
                         }
 
-                        const days = ["Poniedziałek", "Wtorek", "Środa", "Czwartek", "Piątek", "Sobota", "Niedziela"];
+                        const days = ["Niedziela", "Poniedziałek", "Wtorek", "Środa", "Czwartek", "Piątek", "Sobota"];
 
                         return (
-                            <>
+                            <React.Fragment key={i}>
                                 {!smallTimeDifferenceBefore &&
-                                <div key={date.getTime()} className="messages__time">
-                                    {`${(date.getTime() - prevDate.getTime() > 24*60*60*1000 && `${days[date.getDay()]},`)} ${hour}:${minute}`}
+                                <div className="messages__time">
+                                    {`${(date.getTime() - prevDate.getTime() > 24*60*60*1000 ? `${days[date.getDay()]}, ` : "")}${DateFormatter.dateObjectToHourMinute(date)}`}
                                 </div>}
-                                <div key={m.messageId} className={className} id={lastDisplayedMessage === m.messageId ? "lastMessage" : ""}>
+                                <div className={className} id={lastDisplayedMessage === m.messageId ? "lastMessage" : ""}>
                                     {m.content}
+                                    <div className="messages__singleMessage__tooltip">
+                                        {DateFormatter.dateObjectToPretty(date)}
+                                    </div>
                                 </div>
-                            </>
+                            </React.Fragment>
                         )
                     })
                 }</div>
-                <SeenAvatarsPanel bottom={window.innerHeight-bottom}/>
+                <SeenAvatarsPanel bottom={window.innerHeight-bottom} />
             </div>
             <NewMessageInput />
         </div>

@@ -10,7 +10,8 @@ const LeftPanel = () => {
     return (
         <div className="leftPanel">
             <div className="leftPanel__flipped">
-                <Search roundedCorner={active === 0}/>{
+                <Search roundedCorner={active === 0}/>
+                {
                     conversations.map((c, i) => {
                         let className = "leftPanel__convItem";
                         switch (i) {

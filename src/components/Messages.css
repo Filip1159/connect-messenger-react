@@ -36,6 +36,7 @@
 }
 
 .messages__singleMessage {
+    position: relative;
     border-radius: 20px;
     letter-spacing: 1px;
     padding: 10px 20px;
@@ -44,8 +45,50 @@
     cursor: default;
 }
 
+.messages__singleMessage__tooltip {
+    background: darkgray;
+    font-size: 11px;
+    position: absolute;
+    top: 10px;
+    border-radius: 5px;
+    padding: 8px;
+    opacity: 0;
+    z-index: 10;
+}
+
+.myMsg > .messages__singleMessage__tooltip {
+    right: calc(100% + 10px);
+}
+
+.messages__singleMessage__tooltip::after {
+    content: "";
+    position: absolute;
+    top: 8px;
+    border-width: 5px;
+    border-style: solid;
+}
+
+.myMsg > .messages__singleMessage__tooltip::after {
+    left: 100%;
+    border-color: transparent transparent transparent darkgray;
+}
+
+.receivedMsg > .messages__singleMessage__tooltip::after {
+    right: 100%;
+    border-color: transparent darkgray transparent transparent;
+}
+
+.receivedMsg > .messages__singleMessage__tooltip {
+    left: calc(100% + 10px);
+}
+
+.messages__singleMessage:hover > .messages__singleMessage__tooltip {
+    opacity: 100%;
+    transition: opacity .2s linear 1s;  /* property duration type delay */
+}
+
 .receivedMsg {
-    background: #111;
+    background: black;
     margin-left: 10px;
     margin-right: auto;
 }

@@ -1,23 +1,22 @@
 import React, { useContext, useState } from "react";
 import { AuthContext } from "../contexts/AuthContext";
 import { ConversationContext } from "../contexts/ConversationContext";
+import DateFormatter from "../helpers/DateFormatter";
 import "./NewMessageInput.css";
 
 const NewMessageInput = () => {
     const [ content, setContent ] = useState("");
     const { authDetails } = useContext(AuthContext);
-    const { state: { conversations, active }, dispatch } = useContext(ConversationContext);
+    const { state: { conversations, active } } = useContext(ConversationContext);
 
     const handlePost = async () => {
-        document.querySelector(".newMessageInput__input").innerText = "";
-        setContent("");
         const message = {
             conversationId: conversations[active].conversationId,
             userId: authDetails.userId,
-            content,
-            wasRead: false
+            time: DateFormatter.nowToSql(),
+            content
         };
-        const res = await fetch("http://localhost:8080/message", {
+        await fetch("http://localhost:8080/message", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -25,15 +24,17 @@ const NewMessageInput = () => {
             },
             body: JSON.stringify(message)
         });
-        const newMessage = await res.json();
-        dispatch({ type: "ADD_MESSAGE", newMessage });
+        setContent("");
+        document.querySelector(".newMessageInput__input").value = "";
+        const elem = document.querySelector(".messages__container__displayContent");
+        elem.scrollTop = elem.scrollHeight;
     }
 
     return (
         <div className="newMessageInput">
             <input type="text" className="newMessageInput__input" onInput={e => {
-                setContent(e.target.innerText);
-                if (e.target.innerText.endsWith("\n")) handlePost();
+                setContent(e.target.value);
+                if (e.target.value.endsWith("\n")) handlePost();  // not working
             }} />
             <img className="newMessageInput__btn" src="images/send.png" alt="Send" onClick={handlePost}/>
         </div>
