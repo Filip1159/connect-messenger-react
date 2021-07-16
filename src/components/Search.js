@@ -1,7 +1,7 @@
-import React, {useState} from "react";
+import React, { useState } from "react";
 import "./Search.css";
 
-const Search = ({roundedCorner}) => {
+const Search = ({ roundedCorner }) => {
     const [ usersQueryResult, setUsersQueryResult ] = useState([]);
 
     const searchUsersByQuery = async e => {

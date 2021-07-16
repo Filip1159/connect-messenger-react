@@ -53,7 +53,7 @@
     border-radius: 5px;
     padding: 8px;
     opacity: 0;
-    z-index: 10;
+    z-index: 100;
 }
 
 .myMsg > .messages__singleMessage__tooltip {

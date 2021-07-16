@@ -20,7 +20,7 @@
     direction: ltr;
 }
 
-.leftPanel__convItem {
+.leftPanel__chatItem {
     background: white;
     display: flex;
     flex-direction: row;
@@ -28,7 +28,7 @@
     cursor: pointer;
 }
 
-.leftPanel__convItem:hover {
+.leftPanel__chatItem:hover {
     border-left: 5px solid #E7EB59;
     transition: .2s;
 }

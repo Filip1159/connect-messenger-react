@@ -1,12 +1,12 @@
 import React, { useContext } from "react";
 import { AuthContext } from "../contexts/AuthContext";
-import { ConversationContext } from "../contexts/ConversationContext";
+import { ChatContext } from "../contexts/ChatContext";
 import "./SeenAvatar.css"
 
 const SeenAvatar = ({ bottom, opacity }) => {
-    const { state: { conversations, active } } = useContext(ConversationContext);
-    const { authDetails: { userId } } = useContext(AuthContext);
-    const username = conversations[active]?.users[conversations[active]?.users[0]?.userId !== userId ? 0 : 1].username;
+    const { state: { chats, active } } = useContext(ChatContext);
+    const { authDetails: { id } } = useContext(AuthContext);
+    const username = chats[active]?.users[chats[active]?.users[0]?.id !== id ? 0 : 1].username;
     
     return (
         <img

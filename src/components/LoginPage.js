@@ -28,12 +28,7 @@ const LoginPage = () => {
             localStorage.setItem("token", token);
             const decodedToken = jwt_decode(token);
 
-            dispatch({ type: "SET_DETAILS", newDetails: { 
-                username: decodedToken.sub,
-                name: decodedToken.name,
-                surname: decodedToken.surname,
-                userId: decodedToken.userId
-            } });
+            dispatch({ type: "SET_DETAILS", newDetails: { ...decodedToken } });
             history.push("/");
         } else setAuthFailed(true);
     };

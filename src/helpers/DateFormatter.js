@@ -1,4 +1,13 @@
 class DateFormatter {
+
+    constructor(prevDate, currentDate, nextDate) {
+        this.prevDate = prevDate;
+        this.currentDate = currentDate;
+        this.nextDate = nextDate;
+    }
+
+    static #days = ["Niedziela", "Poniedziałek", "Wtorek", "Środa", "Czwartek", "Piątek", "Sobota"];
+
     static nowToSql() {
         const d = new Date();
         let yr = d.getFullYear(), mon = d.getMonth()+1, day = d.getDate(), h = d.getHours(), m = d.getMinutes(), s = d.getSeconds();
@@ -19,23 +28,35 @@ class DateFormatter {
         return new Date(year, month-1, day, hour, minute);
     }
 
-    static dateObjectToHourMinute(date) {
-        let hr = date.getHours();
+    currentToHourMinute() {
+        let hr = this.currentDate.getHours();
         if (hr < 10) hr = "0" + hr;
-        let min = date.getMinutes();
+        let min = this.currentDate.getMinutes();
         if (min < 10) min = "0" + min;
         return `${hr}:${min}`;
     }
 
-    static dateObjectToPretty(date) {
-        const days = ["Niedziela", "Poniedziałek", "Wtorek", "Środa", "Czwartek", "Piątek", "Sobota"];
-        let yr = date.getFullYear(), mon = date.getMonth()+1, day = date.getDate(), dayOfWeek = days[date.getDay()], h = date.getHours(), m = date.getMinutes();
+    currentToPretty() {
+        let mon = this.currentDate.getMonth()+1, day = this.currentDate.getDate(), h = this.currentDate.getHours(), m = this.currentDate.getMinutes();
         if (mon < 10) mon = "0" + mon;
         if (day < 10) day = "0" + day;
         if (h < 10) h = "0" + h;
         if (m < 10) m = "0" + m;
-        return `${dayOfWeek}, ${yr}.${mon}.${day}, ${h}:${m}`;
+        return `${DateFormatter.#days[this.currentDate.getDay()]}, ${this.currentDate.getFullYear()}.${mon}.${day}, ${h}:${m}`;
     }
+
+    displayDayIfDifferent() {
+        return this.currentDate.getTime() - this.prevDate.getTime() > 24*60*60*1000 ? `${DateFormatter.#days[this.currentDate.getDay()]}, ` : ""
+    }
+
+    is5MinDiffBefore() {
+        return this.currentDate.getTime() - this.prevDate.getTime() < 5*60*1000;
+    }
+
+    is5MinDiffAfter() {
+        return this.nextDate.getTime() - this.currentDate.getTime() < 5*60*1000;
+    }
+
 }
 
 export default DateFormatter;

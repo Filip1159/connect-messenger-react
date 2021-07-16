@@ -9,7 +9,7 @@ const Header = () => {
             <span className="header__title">SpringChat</span>
             <img src="./images/logout.png" alt="Logout" className="header__logoutBtn" onClick={() => {
                 localStorage.removeItem("token");
-                history.push("/login");
+                history.replace("/login");
             }}/>
         </header>
     );
