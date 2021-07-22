@@ -4,7 +4,7 @@
     flex-grow: 1;
     justify-content: center;
     margin: 0;
-    padding: 100px;
+    padding: 50px;
 }
 
 .loginPage__form {
@@ -38,11 +38,6 @@
     border-radius: 10px;
     border: none;
     outline: none;
-}
-
-.loginPage__description {
-    font-size: 34px;
-    padding-top: 100px;
 }
 
 footer {

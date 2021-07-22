@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import "./Search.css";
+import api from "../helpers/axios";
 
 const Search = ({ roundedCorner }) => {
     const [ usersQueryResult, setUsersQueryResult ] = useState([]);
@@ -7,7 +8,7 @@ const Search = ({ roundedCorner }) => {
     const searchUsersByQuery = async e => {
         const query = e.target.innerText;
         if (query !== "") {
-            const res = await fetch(`http://localhost:8080/user/${query}`, {
+            const res = await api.get(`/user/${query}`, {
                 headers: {
                     Authorization: localStorage.getItem("token")
                 }

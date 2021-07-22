@@ -3,6 +3,7 @@ import { AuthContext } from "../contexts/AuthContext";
 import { ChatContext } from "../contexts/ChatContext";
 import DateFormatter from "../helpers/DateFormatter";
 import "./NewMessageInput.css";
+import api from "../helpers/axios";
 
 const NewMessageInput = () => {
     const [ content, setContent ] = useState("");
@@ -11,23 +12,22 @@ const NewMessageInput = () => {
 
     const handlePost = async e => {
         e.preventDefault();
-        const message = {
-            chatId: chats[active].id,
-            userId: authDetails.id,
-            time: DateFormatter.nowToSql(),
-            content
-        };
-        await fetch("http://localhost:8080/message", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: localStorage.getItem("token")
-            },
-            body: JSON.stringify(message)
-        });
-        setContent("");
-        const elem = document.querySelector(".messages__container__displayContent");
-        elem.scrollTop = elem.scrollHeight;
+        if (content) { 
+            await api.post("/message",
+                {
+                    chatId: chats[active].id,
+                    userId: authDetails.id,
+                    time: DateFormatter.nowToSql(),
+                    content
+                },
+                {
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: localStorage.getItem("token")
+                }
+            });
+            setContent("");
+        }
     }
 
     return (

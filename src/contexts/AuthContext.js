@@ -5,7 +5,7 @@ import jwt_decode from "jwt-decode";
 export const AuthContext = createContext();
 
 const AuthContextProvider = ({ children }) => {
-    const [ authDetails, dispatch ] = useReducer(authReducer, [], () => {
+    const [ authDetails, dispatch ] = useReducer(authReducer, null, () => {
         const token = localStorage.getItem("token");
         if (!token) return null;
         const decodedToken = jwt_decode(token);

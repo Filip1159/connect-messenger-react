@@ -3,6 +3,7 @@ import "./LoginPage.css";
 import { useHistory } from "react-router-dom";
 import jwt_decode from "jwt-decode";
 import { AuthContext } from "../contexts/AuthContext";
+import api from "../helpers/axios";
 
 const LoginPage = () => {
     const { dispatch } = useContext(AuthContext);
@@ -13,18 +14,15 @@ const LoginPage = () => {
 
     const handleSubmit = async e => {
         e.preventDefault();
-        const message = { username, password };
-        const res = await fetch("http://localhost:8080/login", {
-            method: "POST",
+        const res = await api.post("/login", JSON.stringify({ username, password }), {
             headers: {
                 Accept: "application/json, text/plain, */*",
                 "Content-Type": "application/json"
-            },
-            body: JSON.stringify(message)
+            }
         });
 
         if (res.status === 200) {
-            const token = res.headers.get("Authentication");
+            const token = res.headers.authentication;
             localStorage.setItem("token", token);
             const decodedToken = jwt_decode(token);
 
@@ -44,12 +42,6 @@ const LoginPage = () => {
                     <input type="submit" className="loginPage__input" value="Zaloguj się" />
                     {authFailed && <span>Nieprawidłowa nazwa użytkownika lub hasło</span>}
                 </form>
-                <div className="loginPage__description">
-                    &rarr; Pozostawaj w kontakcie ze wszystkimi<br/><br/>
-                    wygodniej niż kiedykolwiek.<br/><br/>
-                    &rarr; Wypróbuj aplikację<br/><br/>
-                    zbudowaną z użyciem najnowszych technologii.
-                </div>
             </div>
             <footer>SpringChat &copy; 2021 | Losowy tekst na stopce</footer>
         </>

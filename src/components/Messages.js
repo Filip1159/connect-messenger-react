@@ -1,56 +1,88 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useCallback, useContext, useEffect, useRef, useState } from "react";
 import { AuthContext } from "../contexts/AuthContext";
 import { ChatContext } from "../contexts/ChatContext";
 import DateFormatter from "../helpers/DateFormatter";
 import "./Messages.css";
 import NewMessageInput from "./NewMessageInput";
+import useLastMessage from "../hooks/useLastMessage";
+import api from "../helpers/axios";
+import useChat from "../hooks/useChat";
 import SeenAvatarsPanel from "./SeenAvatarsPanel";
 
 const Messages = () => {
-    const { state: { chats, active } } = useContext(ChatContext);
-    const { authDetails } = useContext(AuthContext);
-    const lastDisplayedMessage = chats[active]?.status[chats[active]?.status[0]?.id?.userId !== authDetails.id ? 0 : 1]?.messageId;
-    const [ bottom, setBottom ] = useState(0);
-    
-    useEffect(() => {
-        const elem = document.querySelector(".messages__container__displayContent");
-        elem.scrollTop = elem.scrollHeight;
-        setBottom(document.querySelector(".lastMessage")?.getBoundingClientRect().bottom);
-    }, [active]);
+    const { state: { chats, active } }  = useContext(ChatContext);
+    const { authDetails }               = useContext(AuthContext);
+    const chat                          = useChat(chats, active);
+    const { myLastMessage, recipientLastMessage, lastMessage } = useLastMessage(chat, authDetails);
+    const [ bottom, setBottom ]         = useState();
+    const contentDisplayerRef           = useRef(null);
+    const lastMessageRef                = useRef(null);
 
+    /* callback ref */
+    const setLastMessageRef = useCallback(node => {
+        console.log("node = ");
+        console.log(node);
+        if (node) {
+            lastMessageRef.current = node;
+            setBottom(node.getBoundingClientRect().bottom);
+        }
+    }, []);
+
+    /* updates bottom value when switching between chats */
     useEffect(() => {
+        console.log("useEffect with setBottom");
+        if (contentDisplayerRef.current) {
+            console.log("useEffect of seenAvatar launched");
+            contentDisplayerRef.current.scrollTop = contentDisplayerRef.current.scrollHeight;
+        }
+        if (lastMessageRef.current) {
+            setBottom(lastMessageRef.current.getBoundingClientRect().bottom);
+        }
+        // eslint-disable-next-line
+    }, [ chat ]);
+
+    /* puts new status to api, when I read unseen message */
+    /* performs request through axios,
+     * api sends status update through websocket,
+     * chatReducer performs context update
+     * useEffect is launched once again, but then specific messages (their IDs) are equal and nothing happens
+     * */
+    useEffect(() => {
+        console.log("useEffect from Messages.js called");
         const updateStatus = async () => {
-            console.log("Use Effect called");
             const newStatus = {
-                id: {
-                    chatId: chats[active].id,
-                    userId: authDetails.id
-                },
-                messageId: chats[active].messages[chats[active].messages.length - 1].id,
+                id: { chatId: chats[active].id, userId: authDetails.id },
+                messageId: lastMessage,
                 time: DateFormatter.nowToSql()
             };
-            console.log("Sending update status request: ", newStatus);
-            fetch("http://localhost:8080/status", {
-                method: "PUT",
+            console.log("newStatus = ");
+            console.log(newStatus);
+            await api.put("/status", newStatus, {
                 headers: {
                     "Content-Type": "application/json",
                     Authorization: localStorage.getItem("token")
-                },
-                body: JSON.stringify(newStatus)
+                }
             });
         };
-        if (chats[active]?.status[chats[active]?.status[0]?.id?.userId === authDetails?.id ? 0 : 1]?.messageId
-            !==
-            chats[active]?.messages[chats[active]?.messages?.length - 1].id)  // there are some messages unseen
+        console.log("myLastMessage = " + myLastMessage + ", lastMessage = " + lastMessage);
+        if (myLastMessage && lastMessage && myLastMessage !== lastMessage) { // there are some messages unseen: myLastMessage === lastMessageSeenByMe
+            console.log("Indexes differ, updating status");
             updateStatus();
-    }, [active, chats]);
+        }
+        // eslint-disable-next-line
+    }, [ myLastMessage, lastMessage ]);
 
-    return ( 
+    return (
         <div className="messages">
             <div className="messages__container">
                 <div
+                    ref={contentDisplayerRef}
                     className="messages__container__displayContent"
-                    onScroll={e => setBottom(document.querySelector(".lastMessage")?.getBoundingClientRect().bottom)}
+                    onScroll={() => {
+                        if (lastMessageRef.current) {
+                            setBottom(lastMessageRef.current.getBoundingClientRect().bottom);
+                        }
+                    }}
                 >{
                     chats[active]?.messages?.map((m, i) => {
                         const activeMessages = chats[active].messages;
@@ -88,15 +120,13 @@ const Messages = () => {
                             if (activeMessages[i+1]?.userId === m.userId && df.is5MinDiffAfter()) extraClasses += " bottomSticky";
                         }
 
-                        if (lastDisplayedMessage === m.id) extraClasses += " lastMessage";
-
                         return (
                             <React.Fragment key={i}>
                                 {!df.is5MinDiffBefore() &&
                                 <div className="messages__time">
                                     {df.displayDayIfDifferent() + df.currentToHourMinute()}
                                 </div>}
-                                <div className={`messages__singleMessage${extraClasses}`}>
+                                <div ref={recipientLastMessage === m.id ? setLastMessageRef : null} id={`messageId${m.id}`} className={`messages__singleMessage${extraClasses}`}>
                                     {m.content}
                                     <div className="messages__singleMessage__tooltip">{df.currentToPretty()}</div>
                                 </div>
