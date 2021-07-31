@@ -8,15 +8,27 @@ import useLastMessage from "../hooks/useLastMessage";
 import api from "../helpers/axios";
 import useChat from "../hooks/useChat";
 import SeenAvatarsPanel from "./SeenAvatarsPanel";
+import fall from "../helpers/FallingAvatar";
 
 const Messages = () => {
     const { state: { chats, active } }  = useContext(ChatContext);
     const { authDetails }               = useContext(AuthContext);
     const chat                          = useChat(chats, active);
     const { myLastMessage, recipientLastMessage, lastMessage } = useLastMessage(chat, authDetails);
-    const [ bottom, setBottom ]         = useState();
+    const [ bottom, setBottom ]         = useState(null);
     const contentDisplayerRef           = useRef(null);
     const lastMessageRef                = useRef(null);
+    const recipientLastMessageRef       = useRef(null);
+    const prevoiusBottom                = useRef(null);
+    const prevChat                      = useRef(null);
+
+    useEffect(() => {
+        prevChat.current = chat;
+    }, [ chat ]);
+
+    useEffect(() => {
+        prevoiusBottom.current = bottom;
+    }, [ bottom ]);
 
     /* callback ref */
     const setLastMessageRef = useCallback(node => {
@@ -24,7 +36,13 @@ const Messages = () => {
         console.log(node);
         if (node) {
             lastMessageRef.current = node;
-            setBottom(node.getBoundingClientRect().bottom);
+            console.log("previousBottom = ");
+            console.log(prevoiusBottom.current);
+            if (prevoiusBottom.current && prevChat.current.id === chat.id) {
+                console.log("avatar falls from " + prevoiusBottom.current + " to " + node.getBoundingClientRect().bottom);
+                fall(setBottom, prevoiusBottom.current, node.getBoundingClientRect().bottom);
+            }
+            else setBottom(node.getBoundingClientRect().bottom);
         }
     }, []);
 
@@ -120,13 +138,15 @@ const Messages = () => {
                             if (activeMessages[i+1]?.userId === m.userId && df.is5MinDiffAfter()) extraClasses += " bottomSticky";
                         }
 
+                        const reference = recipientLastMessage === m.id ? setLastMessageRef : null;  // inserts lastMessageRef to last message displayed by second user
+
                         return (
                             <React.Fragment key={i}>
                                 {!df.is5MinDiffBefore() &&
                                 <div className="messages__time">
                                     {df.displayDayIfDifferent() + df.currentToHourMinute()}
                                 </div>}
-                                <div ref={recipientLastMessage === m.id ? setLastMessageRef : null} id={`messageId${m.id}`} className={`messages__singleMessage${extraClasses}`}>
+                                <div ref={reference} id={`messageId${m.id}`} className={`messages__singleMessage${extraClasses}`}>
                                     {m.content}
                                     <div className="messages__singleMessage__tooltip">{df.currentToPretty()}</div>
                                 </div>
