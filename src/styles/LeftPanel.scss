@@ -1,0 +1,74 @@
+@import "./variables";
+@import "./mixins";
+
+.leftPanel {
+    @include setFlex(column, 1);
+    background-color: $backgroundColor;
+    font-size: 26px;
+    max-height: calc(100vh - 65px);
+    min-width: 430px;
+    z-index: 1;
+    cursor: default;
+    overflow-y: scroll;
+    overflow-x: visible;
+    direction: rtl;
+
+    &__flipped {
+        @include setFlex(column, 1);
+        direction: ltr;
+    }
+    
+    &__chatItem {
+        background: $primaryColor;
+        @include setFlex();
+        transition: $transitionTime;
+        cursor: pointer;
+    }
+    
+    &__chatItem:hover {
+        border-left: 5px solid $primaryColor;
+        transition: $transitionTime;
+    }
+
+    &__foo {  /* empty div that makes leftPanel reach bottom of page */
+        background-color: $primaryColor;
+        flex-grow: 1;
+    }
+    
+    &__nameSurname {
+        font-weight: bold;
+        letter-spacing: 1px;
+        margin-top: 20px;
+        margin-left: 20px;
+    }
+    
+    &__lastMessage {
+        font-size: 13px;
+        font-weight: lighter;
+        color: $secondaryTextColor;
+        margin-top: 20px;
+        margin-left: 20px;
+    }
+}
+
+.active {
+    background: $backgroundColor;
+    color: $primaryTextColor;
+    font-size: 30px;
+
+    &:hover {  /* only to cancel leftPanel__convItem hover effect */
+        border-left: none
+    }
+    
+    .leftPanel__lastMessage {
+        display: none;
+    }
+}
+
+.beforeActive {
+    border-bottom-right-radius: 30px;
+}
+
+.afterActive {
+    border-top-right-radius: 30px;
+}

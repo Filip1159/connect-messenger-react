@@ -2,7 +2,7 @@ import React, { useContext, useState } from "react";
 import { AuthContext } from "../contexts/AuthContext";
 import { ChatContext } from "../contexts/ChatContext";
 import DateFormatter from "../helpers/DateFormatter";
-import "./NewMessageInput.css";
+import "../styles/NewMessageInput.scss";
 import api from "../helpers/axios";
 
 const NewMessageInput = () => {

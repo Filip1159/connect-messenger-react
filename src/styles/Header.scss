@@ -1,0 +1,26 @@
+@import "./variables";
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: $primaryColor;
+    height: 65px;
+    min-height: 65px;
+    width: 100%;
+    z-index: 5;
+
+    &__title {
+        font-size: $headerTextSize;
+        color: $primaryTextColor;
+        padding-left: 30px;
+        cursor: default;
+    }
+
+    &__logoutBtn {
+        width: 45px;
+        height: 45px;
+        padding-right: 30px;
+        cursor: pointer;
+    }
+}

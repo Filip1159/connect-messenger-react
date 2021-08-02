@@ -1,6 +1,6 @@
 import React from "react";
 import SeenAvatar from "./SeenAvatar";
-import "./SeenAvatarsPanel.css"
+import "../styles/SeenAvatarsPanel.scss";
 
 const SeenAvatarsPanel = ({ bottom }) => {
 

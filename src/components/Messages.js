@@ -2,7 +2,7 @@ import React, { useCallback, useContext, useEffect, useRef, useState } from "rea
 import { AuthContext } from "../contexts/AuthContext";
 import { ChatContext } from "../contexts/ChatContext";
 import DateFormatter from "../helpers/DateFormatter";
-import "./Messages.css";
+import "../styles/Messages.scss";
 import NewMessageInput from "./NewMessageInput";
 import useLastMessage from "../hooks/useLastMessage";
 import api from "../helpers/axios";
@@ -18,7 +18,6 @@ const Messages = () => {
     const [ bottom, setBottom ]         = useState(null);
     const contentDisplayerRef           = useRef(null);
     const lastMessageRef                = useRef(null);
-    const recipientLastMessageRef       = useRef(null);
     const prevoiusBottom                = useRef(null);
     const prevChat                      = useRef(null);
 
@@ -38,12 +37,13 @@ const Messages = () => {
             lastMessageRef.current = node;
             console.log("previousBottom = ");
             console.log(prevoiusBottom.current);
-            if (prevoiusBottom.current && prevChat.current.id === chat.id) {
+            if (prevoiusBottom.current) {
                 console.log("avatar falls from " + prevoiusBottom.current + " to " + node.getBoundingClientRect().bottom);
                 fall(setBottom, prevoiusBottom.current, node.getBoundingClientRect().bottom);
             }
             else setBottom(node.getBoundingClientRect().bottom);
         }
+    // eslint-disable-next-line
     }, []);
 
     /* updates bottom value when switching between chats */

@@ -1,6 +1,5 @@
 import React, { useContext, useEffect } from "react";
 import { BrowserRouter as Router, Route, Redirect, Switch } from "react-router-dom";
-import "./App.css";
 import Header from "./components/Header";
 import LeftPanel from "./components/LeftPanel";
 import Messages from "./components/Messages";
@@ -9,6 +8,7 @@ import { AuthContext } from "./contexts/AuthContext";
 import { ChatContext } from "./contexts/ChatContext";
 import SockJsClient from "react-stomp";
 import api, { baseURL } from "./helpers/axios";
+import RightPanel from "./components/RightPanel";
 
 const App = () => {
     const { state: { chats }, dispatch } = useContext(ChatContext);
@@ -60,6 +60,7 @@ const App = () => {
                         />
                         <LeftPanel />
                         <Messages />
+                        <RightPanel />
                     </div>
                     :
                     <Redirect to="/login" />

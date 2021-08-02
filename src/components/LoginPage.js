@@ -1,5 +1,5 @@
 import React, { useContext, useState } from "react";
-import "./LoginPage.css";
+import "../styles/LoginPage.scss";
 import { useHistory } from "react-router-dom";
 import jwt_decode from "jwt-decode";
 import { AuthContext } from "../contexts/AuthContext";

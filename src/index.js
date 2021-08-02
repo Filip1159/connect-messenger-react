@@ -1,6 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom";
-import "./index.css";
+import "./styles/base.scss";
 import App from "./App";
 import AuthContextProvider from "./contexts/AuthContext";
 import ChatContextProvider from "./contexts/ChatContext";

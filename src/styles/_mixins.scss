@@ -1,0 +1,10 @@
+@mixin setFlex($flexDirection: row,
+                $flexGrow: 0,
+                $justifyContent: normal,
+                $alignItems: normal) {
+    display: flex;
+    flex-grow: $flexGrow;
+    flex-direction: $flexDirection;
+    justify-content: $justifyContent;
+    align-items: $alignItems;
+}

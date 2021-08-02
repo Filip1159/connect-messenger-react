@@ -1,0 +1,28 @@
+@import "./variables";
+@import "./mixins";
+
+.newMessageInput {
+    @include setFlex();
+    width: 100%;
+
+    &__input {
+        @include setFlex(row, 1);
+        width: auto;
+        margin: 18px;
+    }
+    
+    &__btn {
+        width: 35px;
+        height: 35px;
+        margin: 20px 20px 20px 0;
+        transition: $transitionTime;
+        cursor: pointer;
+
+        &:hover {
+            filter: brightness(0%);
+            transition: $transitionTime;
+            width: 40px;
+            height: 40px;
+        }
+    }
+}

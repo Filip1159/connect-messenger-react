@@ -1,7 +1,8 @@
 import { useContext } from "react";
 import { AuthContext } from "../contexts/AuthContext";
 import { ChatContext } from "../contexts/ChatContext";
-import "./LeftPanel.css"
+import Search from "./Search";
+import "../styles/LeftPanel.scss";
 
 const LeftPanel = () => {
     const { state: { chats, active }, dispatch } = useContext(ChatContext);
@@ -9,6 +10,7 @@ const LeftPanel = () => {
     return (
         <div className="leftPanel">
             <div className="leftPanel__flipped">
+                <Search roundedCorner={active === 0} />
                 {
                     chats.map((c, i) => {
                         let extraClasses = "";
