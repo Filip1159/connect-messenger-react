@@ -1,19 +1,16 @@
 import React, { useState } from "react";
 import "../styles/Search.scss";
-import api from "../helpers/axios";
+import ChatAPI from "../helpers/ChatAPI";
 
 const Search = ({ roundedCorner }) => {
     const [ usersQueryResult, setUsersQueryResult ] = useState([]);
 
-    const searchUsersByQuery = async e => {
+    const handleInput = async e => {
         const query = e.target.value;
         if (query !== "") {
-            const res = await api.get(`/user/${query}`, {
-                headers: {
-                    Authorization: localStorage.getItem("token")
-                }
+            ChatAPI.searchUsersByQuery(query).then(results => {
+                setUsersQueryResult(results);
             });
-            setUsersQueryResult(res.data);
         } else setUsersQueryResult([]);
     }
 
@@ -22,7 +19,7 @@ const Search = ({ roundedCorner }) => {
             <img src="./images/search.png" alt="Search" width={100} height={100} />
             <div className="search__container" >
                 Szukaj:
-                <input type="text" className="search__queryInput" onInput={searchUsersByQuery}/>
+                <input type="text" className="search__queryInput" onInput={handleInput}/>
                 <div className="search__queryResult">
                     <ul>{
                         usersQueryResult.map(u => <li key={u.username}>{`${u.name} ${u.surname}`}</li>)

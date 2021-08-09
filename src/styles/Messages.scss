@@ -20,6 +20,7 @@
     }
 
     &__singleMessage {
+        $self: &;
         position: relative;
         border-radius: 20px;
         letter-spacing: 1px;
@@ -52,6 +53,58 @@
                 border-style: solid;
             }
         }
+
+        &--receivedMsg {
+            background: $secondaryColor;
+            margin-left: 10px;
+            margin-right: auto;
+            color: $whiteTextColor;
+            
+            #{ $self }__tooltip {
+                left: calc(100% + 10px);
+        
+                &::after {
+                    right: 100%;
+                    border-color: transparent $tooltipBackgroundColor transparent transparent;
+                }
+            }
+        }
+
+        &--receivedMsg#{&}--topSticky {
+            margin-top: 1px;
+            border-top-left-radius: 0;
+        }
+
+        &--receivedMsg#{&}--bottomSticky {
+            margin-bottom: 1px;
+            border-bottom-left-radius: 0;
+        }
+        
+        &--myMsg {
+            background: $primaryColor;
+            margin-right: 10px;
+            margin-left: auto;
+            color: $blackTextColor;
+        
+            #{ $self }__tooltip {
+                right: calc(100% + 10px);
+        
+                &::after {
+                    left: 100%;
+                    border-color: transparent transparent transparent $tooltipBackgroundColor;
+                }
+            }
+        }
+
+        &--myMsg#{&}--topSticky {
+            margin-top: 1px;
+            border-top-right-radius: 0;
+        }
+    
+        &--myMsg#{&}--bottomSticky {
+            margin-bottom: 1px;
+            border-bottom-right-radius: 0;
+        }
     }
 
     &__time {
@@ -59,57 +112,5 @@
         text-align: center;
         color: $primaryColor;
         margin-top: 15px;
-    }
-}
-
-.receivedMsg {
-    background: $secondaryColor;
-    margin-left: 10px;
-    margin-right: auto;
-    color: $whiteTextColor;
-
-    &.topSticky {
-        margin-top: 1px;
-        border-top-left-radius: 0;
-    }
-    
-    &.bottomSticky {
-        margin-bottom: 1px;
-        border-bottom-left-radius: 0;
-    }
-    
-    .messages__singleMessage__tooltip {
-        left: calc(100% + 10px);
-
-        &::after {
-            right: 100%;
-            border-color: transparent $tooltipBackgroundColor transparent transparent;
-        }
-    }
-}
-
-.myMsg {
-    background: $primaryColor;
-    margin-right: 10px;
-    margin-left: auto;
-    color: $blackTextColor;
-
-    &.topSticky {
-        margin-top: 1px;
-        border-top-right-radius: 0;
-    }
-
-    &.bottomSticky {
-        margin-bottom: 1px;
-        border-bottom-right-radius: 0;
-    }
-
-    .messages__singleMessage__tooltip {
-        right: calc(100% + 10px);
-
-        &::after {
-            left: 100%;
-            border-color: transparent transparent transparent $tooltipBackgroundColor;
-        }
     }
 }

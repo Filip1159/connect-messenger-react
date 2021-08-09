@@ -1,31 +1,16 @@
 import React, { useContext, useState } from "react";
-import { AuthContext } from "../contexts/AuthContext";
 import { ChatContext } from "../contexts/ChatContext";
-import DateFormatter from "../helpers/DateFormatter";
 import "../styles/NewMessageInput.scss";
-import api from "../helpers/axios";
+import ChatAPI from "../helpers/ChatAPI";
 
 const NewMessageInput = () => {
     const [ content, setContent ] = useState("");
-    const { authDetails } = useContext(AuthContext);
     const { state: { chats, active } } = useContext(ChatContext);
 
-    const handlePost = async e => {
+    const handlePost = e => {
         e.preventDefault();
         if (content) { 
-            await api.post("/message",
-                {
-                    chatId: chats[active].id,
-                    userId: authDetails.id,
-                    time: DateFormatter.nowToSql(),
-                    content
-                },
-                {
-                    headers: {
-                        "Content-Type": "application/json",
-                        Authorization: localStorage.getItem("token")
-                }
-            });
+            ChatAPI.postMessage(chats[active].id, content);
             setContent("");
         }
     }

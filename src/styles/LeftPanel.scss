@@ -18,57 +18,8 @@
         direction: ltr;
     }
     
-    &__chatItem {
-        background: $primaryColor;
-        @include setFlex();
-        transition: $transitionTime;
-        cursor: pointer;
-    }
-    
-    &__chatItem:hover {
-        border-left: 5px solid $primaryColor;
-        transition: $transitionTime;
-    }
-
-    &__foo {  /* empty div that makes leftPanel reach bottom of page */
+    &__foo {  /* empty div that makes leftPanel reach bottom of page and has rounded corner if needed */
         background-color: $primaryColor;
         flex-grow: 1;
     }
-    
-    &__nameSurname {
-        font-weight: bold;
-        letter-spacing: 1px;
-        margin-top: 20px;
-        margin-left: 20px;
-    }
-    
-    &__lastMessage {
-        font-size: 13px;
-        font-weight: lighter;
-        color: $secondaryTextColor;
-        margin-top: 20px;
-        margin-left: 20px;
-    }
-}
-
-.active {
-    background: $backgroundColor;
-    color: $primaryTextColor;
-    font-size: 30px;
-
-    &:hover {  /* only to cancel leftPanel__convItem hover effect */
-        border-left: none
-    }
-    
-    .leftPanel__lastMessage {
-        display: none;
-    }
-}
-
-.beforeActive {
-    border-bottom-right-radius: 30px;
-}
-
-.afterActive {
-    border-top-right-radius: 30px;
 }

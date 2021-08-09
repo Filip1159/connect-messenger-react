@@ -1,0 +1,52 @@
+@import "./variables";
+@import "./mixins";
+
+.chatItem {
+    $self: &;
+    background: $primaryColor;
+    @include setFlex();
+    transition: $transitionTime;
+    cursor: pointer;
+    
+    &__nameSurname {
+        font-weight: bold;
+        letter-spacing: 1px;
+        margin-top: 20px;
+        margin-left: 20px;
+    }
+    
+    &__lastMessage {
+        font-size: 13px;
+        font-weight: lighter;
+        color: $secondaryTextColor;
+        margin-top: 20px;
+        margin-left: 20px;
+    }
+
+    &:hover {
+        border-left: 5px solid $primaryColor;
+        transition: $transitionTime;
+    }
+
+    &--active {
+        background: $backgroundColor;
+        color: $primaryTextColor;
+        font-size: 30px;
+    
+        &:hover {  /* only to cancel leftPanel__convItem hover effect */
+            border-left: none
+        }
+        
+        #{ $self }__lastMessage {
+            display: none;
+        }
+    }
+    
+    &--beforeActive {
+        border-bottom-right-radius: 30px;
+    }
+    
+    &--afterActive {
+        border-top-right-radius: 30px;
+    }
+}

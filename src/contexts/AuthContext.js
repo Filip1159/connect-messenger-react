@@ -1,16 +1,16 @@
 import { createContext, useReducer } from "react";
 import { authReducer } from "./AuthReducer";
-import jwt_decode from "jwt-decode";
+import ChatAPI from "../helpers/ChatAPI";
 
 export const AuthContext = createContext();
 
 const AuthContextProvider = ({ children }) => {
     const [ authDetails, dispatch ] = useReducer(authReducer, null, () => {
-        const token = localStorage.getItem("token");
-        if (!token) return null;
-        const decodedToken = jwt_decode(token);
-        const authDetails = { ...decodedToken };
-        return authDetails;
+        try {
+            return ChatAPI.getAuthDetails();
+        } catch (e) {
+            return null;
+        }
     });
 
     return (
