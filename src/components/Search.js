@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import "../styles/Search.scss";
 import ChatAPI from "../helpers/ChatAPI";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faSearch } from "@fortawesome/free-solid-svg-icons";
 
 const Search = ({ roundedCorner }) => {
     const [ usersQueryResult, setUsersQueryResult ] = useState([]);
@@ -16,7 +18,7 @@ const Search = ({ roundedCorner }) => {
 
     return (
         <div className="search" style={{borderBottomRightRadius: roundedCorner ? "20px" : 0}}>
-            <img src="./images/search.png" alt="Search" width={100} height={100} />
+            <FontAwesomeIcon icon={faSearch} size="5x" />
             <div className="search__container" >
                 Szukaj:
                 <input type="text" className="search__queryInput" onInput={handleInput}/>

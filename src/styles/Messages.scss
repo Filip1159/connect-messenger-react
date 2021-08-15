@@ -5,17 +5,21 @@
     background: $backgroundColor;
     @include setFlex(column, 0, flex-end);
     height: 100%;
-    width: 100%;
 
     &__container {
         @include setFlex();
+        @include fancyScrollbar(right);
+        overflow-y: auto;
 
         &__displayContent {
             @include setFlex(column);    /* make singleMessages fit their content */
             width: 100%;
             max-height: calc(100vh - 145px);
-            overflow-y: scroll;
             padding-right: 30px;
+            overflow-y: visible;
+            @media (max-width: 576px) {
+                padding-right: 16px;
+            }
         }
     }
 
@@ -29,6 +33,12 @@
         max-width: 60%;
         font-size: $messageTextSize;
         cursor: default;
+
+        @media (max-width: 576px) {
+            font-size: $smallMessageTextSize;
+            padding: 5px 10px;
+            border-radius: 10px;
+        }
 
         &:hover > .messages__singleMessage__tooltip {
             opacity: 100%;
@@ -44,6 +54,10 @@
             padding: 8px;
             opacity: 0;
             z-index: 100;
+
+            @media (max-width: 576px) {
+                display: none;
+            }
 
             &::after {
                 content: "";
@@ -112,5 +126,9 @@
         text-align: center;
         color: $primaryColor;
         margin-top: 15px;
+
+        @media (max-width: 576px) {
+            font-size: $smallTimeTextSize;
+        }
     }
 }

@@ -4,7 +4,7 @@ import { Stomp } from "@stomp/stompjs";
 import DateFormatter from "./DateFormatter";
 import axios from "axios";
 
-const baseURL = "http://192.168.8.104:8080";
+const baseURL = "http://192.168.8.105:8080";
 const api = axios.create({ baseURL });
 
 class ChatAPI {

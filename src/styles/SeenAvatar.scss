@@ -1,8 +1,14 @@
 .seenAvatar { 
     height: 20px;
     width: 20px;
-    margin-left: -40px;
+    margin-left: -50px;
     border-radius: 50%;
     position: absolute;
     z-index: 4;
+
+    @media (max-width: 576px) {
+        height: 12px;
+        width: 12px;
+        margin-left: -30px;
+    }
 }

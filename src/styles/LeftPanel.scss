@@ -3,22 +3,32 @@
 
 .leftPanel {
     @include setFlex(column, 1);
-    background-color: $backgroundColor;
+    @include fancyScrollbar(left);
     font-size: 26px;
     max-height: calc(100vh - 65px);
     min-width: 430px;
     z-index: 1;
     cursor: default;
-    overflow-y: scroll;
+    overflow-y: auto;
     overflow-x: visible;
     direction: rtl;
+    transition: .5s;
+
+    @media (max-width: 768px) {
+        min-width: 120px;
+    }
+
+    @media (max-width: 576px) {
+        min-width: 70px;
+    }
 
     &__flipped {
         @include setFlex(column, 1);
+        background-color: $backgroundColor;
         direction: ltr;
     }
     
-    &__foo {  /* empty div that makes leftPanel reach bottom of page and has rounded corner if needed */
+    &__foo {  /* empty div that makes leftPanel reach bottom of page and also has rounded corner if needed */
         background-color: $primaryColor;
         flex-grow: 1;
     }

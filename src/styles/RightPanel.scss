@@ -11,6 +11,10 @@
     cursor: default;
     overflow-y: scroll;
 
+    @media (max-width: 1200px) {
+        display: none;
+    }
+
     &__userAvatar {
         width: 200px;
         height: 200px;

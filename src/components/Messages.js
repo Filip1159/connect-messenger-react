@@ -99,18 +99,32 @@ const Messages = () => {
         );
     });
 
+    // eslint-disable-next-line
+    const [ dim, setDim ] = useState(0); /* it exists here only because of a need of re-rendering by change either props of state */
+
+    useEffect(() => {
+        const handleResize = () => {
+            setDim(window.innerHeight);
+            if (lastMessageRef.current) {
+                setBottom(lastMessageRef.current.getBoundingClientRect().bottom);
+            }
+        };
+        window.addEventListener("resize", handleResize);
+        return () => { window.removeEventListener("resize", handleResize) };
+    })
+
     return (
         <div className="messages">
-            <div className="messages__container">
-                <div
-                    ref={contentDisplayerRef}
-                    className="messages__container__displayContent"
-                    onScroll={() => {
-                        if (lastMessageRef.current) {
-                            setBottom(lastMessageRef.current.getBoundingClientRect().bottom);
-                        }
-                    }}
-                >
+            <div
+                ref={contentDisplayerRef}
+                className="messages__container"
+                onScroll={() => {
+                    if (lastMessageRef.current) {
+                        setBottom(lastMessageRef.current.getBoundingClientRect().bottom);
+                    }
+                }}
+            >
+                <div className="messages__container__displayContent">
                    {renderedMessages}
                 </div>
                 <SeenAvatarsPanel bottom={window.innerHeight-bottom} />

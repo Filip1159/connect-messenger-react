@@ -3,12 +3,15 @@
 
 .newMessageInput {
     @include setFlex();
-    width: 100%;
 
     &__input {
         @include setFlex(row, 1);
-        width: auto;
         margin: 18px;
+
+        @media (max-width: 576px) {
+            margin: 10px;
+            font-size: $smallMessageTextSize !important;  /* for some reason browser prefers input[type="text"] property equals to 18px */
+        }
     }
     
     &__btn {
@@ -18,11 +21,19 @@
         transition: $transitionTime;
         cursor: pointer;
 
+        @media (max-width: 576px) {
+            width: 20px;
+            height: 20px;
+            margin: 10px 10px 10px 0;
+        }
+
         &:hover {
             filter: brightness(0%);
-            transition: $transitionTime;
-            width: 40px;
-            height: 40px;
+            width: 45px;
+
+            @media (max-width: 576px) {
+                width: 25px;
+            }
         }
     }
 }

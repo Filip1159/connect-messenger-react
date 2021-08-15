@@ -13,11 +13,11 @@ const ChatItem = ({chat, modifier, onClick }) => {
                 src={`./images/avatars/${user.username}.png`}
                 alt="User avatar"
             />
-            <div style={{display: "flex", flexDirection: "column"}}>
-                <span className="chatItem__nameSurname">
+            <div className="chatItem__chatData">
+                <span className="chatItem__chatData__nameSurname">
                     {user.name + " " + user.surname}
                 </span>
-                <span className="chatItem__lastMessage">{
+                <span className="chatItem__chatData__lastMessage">{
                        (lastMessage.userId === user.id ? user.name : "Ty") + ": " +
                         lastMessage.content.substring(0, 35) +
                        (lastMessage.content.length > 35 ? "..." : "")
