@@ -1,6 +1,6 @@
 import React, { useContext, useState } from "react";
 import "../styles/LoginPage.scss";
-import { useHistory } from "react-router-dom";
+import { useHistory, Redirect } from "react-router-dom";
 import { AuthContext } from "../contexts/AuthContext";
 import ChatAPI from "../helpers/ChatAPI";
 
@@ -13,29 +13,36 @@ const LoginPage = () => {
 
     const handleSubmit = async e => {
         e.preventDefault();
-        if (await ChatAPI.signIn(username, password)) {
+        const succeded = await ChatAPI.signIn(username, password);
+        if (succeded) {
             dispatch({ type: "SET_DETAILS", newDetails: ChatAPI.getAuthDetails() });
             history.push("/");
-        }
-        else {
+        } else {
+            console.log("Auth failed");
             setAuthFailed(true);
         }
     };
 
     return (
-        <>
-            <div className="loginPage">
-                <form className="loginPage__form" onSubmit={handleSubmit} >
-                    <label className="loginPage__label">Nazwa użytkownika:</label>
-                    <input type="text" className="loginPage__input" onInput={e => setUsername(e.target.value)}/>
-                    <label className="loginPage__label">Hasło:</label>
-                    <input type="password" className="loginPage__input" onInput={e => setPassword(e.target.value)}/>
-                    <input type="submit" className="loginPage__input" value="Zaloguj się" />
-                </form>
-                {authFailed && <span>Authentication failed</span>}
-            </div>
-            <footer>SpringChat &copy; 2021 | Losowy tekst na stopce</footer>
-        </>
+        (ChatAPI.isSignedIn() ? 
+            <Redirect to="/" /> : 
+            <>
+                <div className="loginPage">
+                    <span className="loginPage__title">
+                        <span aria-hidden="true" style={{fontWeight: 700}}>&gt;&gt;&gt; </span> restore your CONNECTion
+                    </span>
+                    <form className="loginPage__form" onSubmit={handleSubmit} >
+                        <label className="loginPage__label">your username:</label>
+                        <input type="text" className="loginPage__input" onInput={e => setUsername(e.target.value)}/>
+                        <label className="loginPage__label">password:</label>
+                        <input type="password" className="loginPage__input" onInput={e => setPassword(e.target.value)}/>
+                        <input type="submit" className="loginPage__input" value="sign in" />
+                    </form>
+                    {authFailed && <span className="loginPage__authFailed">Bad credentials! Try again</span>}
+                </div>
+                <footer><b><span aria-hidden="true">&gt;&gt;&gt;</span> <i>CONNECT</i></b> - free text messenger | &copy; CONNECT Inc. 2021</footer>
+            </>
+        )
     );
 }
 

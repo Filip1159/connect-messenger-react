@@ -4,6 +4,7 @@
 .rightPanel {
     background: $backgroundColor;
     @include setFlex(column, 1);
+    @include fancyScrollbar(right);
     max-height: calc(100vh - 125px);
     min-width: 350px;
     max-width: 350px;

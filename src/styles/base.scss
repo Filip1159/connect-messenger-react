@@ -10,7 +10,7 @@ body {
     height: calc(var(--vh, 1vh) * 100);
 }
 
-input[type="text"], input[type="password"] {
+input[type="text"], input[type="password"], input[type="submit"] {
     background-color: $inputBackgroundColor;
     color: $inputTextColor;
     padding: 4px 13px;

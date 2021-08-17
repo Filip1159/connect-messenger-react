@@ -4,7 +4,7 @@ import { Stomp } from "@stomp/stompjs";
 import DateFormatter from "./DateFormatter";
 import axios from "axios";
 
-const baseURL = "http://192.168.8.105:8080";
+const baseURL = "http://192.168.8.104:8080";
 const api = axios.create({ baseURL });
 
 class ChatAPI {
@@ -14,23 +14,23 @@ class ChatAPI {
     static authDetails;
 
     static async signIn(username, password) {
-        const res = await api.post("/login",
-            JSON.stringify({ username, password }),
-            {
-                headers: {
-                    Accept: "application/json, text/plain, */*",
-                    "Content-Type": "application/json"
+        try {
+            const res = await api.post("/login",
+                JSON.stringify({ username, password }),
+                {
+                    headers: {
+                        Accept: "application/json, text/plain, */*",
+                        "Content-Type": "application/json"
+                    }
                 }
+            );
+            if (res.status === 200) {
+                const token = res.headers.authentication;
+                localStorage.setItem("token", token);
+                this.authDetails = jwt_decode(token);
+                return true;
             }
-        );
-    
-        if (res.status === 200) {
-            const token = res.headers.authentication;
-            localStorage.setItem("token", token);
-            this.authDetails = jwt_decode(token);
-            return true;
-        }
-        else {
+        } catch (e) {
             return false;
         }
     }
@@ -67,10 +67,6 @@ class ChatAPI {
             this.stompClient.disconnect(() => console.log("Disconnected from websocket, this equals: ", this));
             this.stompClient = null;
         }
-        if (this.socket) {
-            this.socket.close();
-            this.socket = null;
-        }
         
         localStorage.removeItem("token");
         this.authDetails = null;
@@ -80,11 +76,12 @@ class ChatAPI {
         if (!this.isSignedIn()) {
             throw new Error("User isn't signed in!");
         }
-        if (this.socket) {
+        if (this.stompClient) {
             throw new Error("Websocket is already opened!");
         }
-        this.socket = new SockJS(`${baseURL}/websocket`);
-        this.stompClient = Stomp.over(this.socket);
+        this.stompClient = Stomp.over(
+            () => new SockJS(`${baseURL}/websocket`)
+        );
         this.stompClient.connect(
             {
                 Authentication: localStorage.getItem("token")

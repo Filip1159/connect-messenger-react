@@ -1,22 +1,31 @@
+@import "./variables";
+@import "./mixins";
+
 .loginPage {
-    background-color: #888;
-    display: flex;
-    flex-grow: 1;
-    justify-content: center;
-    margin: 0;
-    padding: 50px;
+    background-color: $backgroundColor;
+    @include setFlex(column, 1, center, center);
+
+    &__title {
+        font-family: "Kanit", sans-serif;
+        font-size: $smallHeaderTextSize;
+        font-weight: 600;
+        color: $secondaryColor;
+        padding-bottom: 30px;
+
+        @media (max-width: 576px) {
+            font-size: $messageTextSize;
+        }
+    }
 
     &__form {
-        display: flex;
-        flex-direction: column;
+        @include setFlex(column);
         font-size: 22px;
+        font-family: "Kanit", sans-serif;
         color: white;
-        font-weight: bold;
-        border-right: 6px solid #E7EB59;
     }
     
     &__label {
-        background: #111;
+        background: $black;
         border-radius: 10px;
         margin: 0 auto 0 10px;
         padding: 10px 20px;
@@ -24,17 +33,22 @@
     }
     
     &__input {
-        background: #111;
-        font-size: 22px;
-        color: white;
-        font-weight: bolder;
-        text-align: center;
+        background: $black;
+        font-family: "Kanit", sans-serif;
+        font-size: 22px !important;
+        text-align: center !important;
         letter-spacing: 1px;
-        padding: 10px;
+        padding: 10px 20px !important;
         margin: 10px;
-        border-radius: 10px;
         border: none;
         outline: none;
+    }
+
+    &__authFailed {
+        font-size: $messageTextSize;
+        color: $secondaryColor;
+        margin-top: 20px;
+        letter-spacing: 1px;
     }
 }
 

@@ -12,6 +12,7 @@ export const chatReducer = (state, action) => {
             const updatedChat = { ...state.chats[target], messages: updatedMessages };
             const updatedChats = [ ...state.chats ];
             updatedChats[target] = updatedChat;
+            document.querySelector(".messages__container").scrollTop = document.querySelector(".messages__container").scrollHeight;
             return { ...state, chats: updatedChats };
         }
         case "SET_CHATS":
@@ -34,6 +35,8 @@ export const chatReducer = (state, action) => {
             updatedChats[target] = updatedChat;
             return { ...state, chats: updatedChats };
         }
+        case "CLEAR":
+            return { chats: [], active: 0 };
         default:
             console.log(`No matching case for: ${action.type} inside chatReducer`);
             return state;
