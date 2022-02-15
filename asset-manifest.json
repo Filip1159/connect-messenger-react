@@ -1,0 +1,20 @@
+{
+  "files": {
+    "main.css": "/react-connect-messenger/static/css/main.554fcadd.chunk.css",
+    "main.js": "/react-connect-messenger/static/js/main.f23a5ffa.chunk.js",
+    "main.js.map": "/react-connect-messenger/static/js/main.f23a5ffa.chunk.js.map",
+    "runtime-main.js": "/react-connect-messenger/static/js/runtime-main.1ffb1cae.js",
+    "runtime-main.js.map": "/react-connect-messenger/static/js/runtime-main.1ffb1cae.js.map",
+    "static/js/2.a1f37e0a.chunk.js": "/react-connect-messenger/static/js/2.a1f37e0a.chunk.js",
+    "static/js/2.a1f37e0a.chunk.js.map": "/react-connect-messenger/static/js/2.a1f37e0a.chunk.js.map",
+    "index.html": "/react-connect-messenger/index.html",
+    "static/css/main.554fcadd.chunk.css.map": "/react-connect-messenger/static/css/main.554fcadd.chunk.css.map",
+    "static/js/2.a1f37e0a.chunk.js.LICENSE.txt": "/react-connect-messenger/static/js/2.a1f37e0a.chunk.js.LICENSE.txt"
+  },
+  "entrypoints": [
+    "static/js/runtime-main.1ffb1cae.js",
+    "static/js/2.a1f37e0a.chunk.js",
+    "static/css/main.554fcadd.chunk.css",
+    "static/js/main.f23a5ffa.chunk.js"
+  ]
+}
