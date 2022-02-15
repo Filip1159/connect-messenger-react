@@ -8,7 +8,7 @@ const ProtectedRoute = ({ children, ...restOfProps }) => {
             {
                 ChatAPI.isSignedIn() ?
                 children : 
-                <Redirect to="/login" />
+                <Redirect to="/connect-messenger-react/login" />
             }
         </Route>
     );

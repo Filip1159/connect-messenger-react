@@ -41,16 +41,17 @@ const App = () => {
         <Router>
             <Header />
             <Switch>
-                <Route path="/login" >
+                <Route path="/connect-messenger-react/login" >
                     <LoginPage />
                 </Route>
-                <ProtectedRoute path="/">
+                <ProtectedRoute exact path="/connect-messenger-react">
                     <div className="app__container">
                         <LeftPanel />
                         <Messages />
                         <RightPanel />
                     </div>
                 </ProtectedRoute>
+                <ProtectedRoute path=""/>
             </Switch>
         </Router>
     );
