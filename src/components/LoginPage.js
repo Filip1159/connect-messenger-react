@@ -16,7 +16,7 @@ const LoginPage = () => {
         const succeded = await ChatAPI.signIn(username, password);
         if (succeded) {
             dispatch({ type: "SET_DETAILS", newDetails: ChatAPI.getAuthDetails() });
-            history.push("/");
+            history.push("/connect-messenger-react");
         } else {
             console.log("Auth failed");
             setAuthFailed(true);

@@ -18,7 +18,7 @@ const NewMessageInput = () => {
     return (
         <form className="newMessageInput" onSubmit={handlePost}>
             <input type="text" value={content} className="newMessageInput__input" onInput={e => setContent(e.target.value) }/>
-            <input type="image" className="newMessageInput__btn" src="images/send.png" alt="Send"/>
+            <input type="image" className="newMessageInput__btn" src="/connect-messenger-react/images/send.png" alt="Send"/>
         </form>
     );
 }

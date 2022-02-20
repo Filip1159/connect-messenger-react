@@ -4,11 +4,10 @@ import { Stomp } from "@stomp/stompjs";
 import DateFormatter from "./DateFormatter";
 import axios from "axios";
 
-const baseURL = "http://192.168.8.104:8080";
+const baseURL = "https://connectmessenger.lm.r.appspot.com";
 const api = axios.create({ baseURL });
 
 class ChatAPI {
-
     static socket;
     static stompClient;
     static authDetails;

@@ -11,7 +11,7 @@ const SeenAvatar = ({ bottom, opacity }) => {
     return (
         <img
             className="seenAvatar"
-            src={`./images/avatars/${username}.png`}
+            src={`/connect-messenger-react/images/avatars/${username}.png`}
             alt="seen avatar"
             style={{
                 bottom: `${bottom}px`,

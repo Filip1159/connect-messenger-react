@@ -51,7 +51,7 @@ const App = () => {
                         <RightPanel />
                     </div>
                 </ProtectedRoute>
-                <ProtectedRoute path=""/>
+                <Route path=""/>
             </Switch>
         </Router>
     );
