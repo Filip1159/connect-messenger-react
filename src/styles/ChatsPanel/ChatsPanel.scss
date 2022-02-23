@@ -1,7 +1,7 @@
-@import "./variables";
-@import "./mixins";
+@import "../variables";
+@import "../mixins";
 
-.leftPanel {
+.chatsPanel {
     @include setFlex(column, 1);
     @include fancyScrollbar(left);
     font-size: 26px;
@@ -27,10 +27,5 @@
         @include setFlex(column, 1);
         background-color: $backgroundColor;
         direction: ltr;
-    }
-    
-    &__foo {  /* empty div that makes leftPanel reach bottom of page and also has rounded corner if needed */
-        background-color: $primaryColor;
-        flex-grow: 1;
     }
 }

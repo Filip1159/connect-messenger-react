@@ -13,8 +13,8 @@ const LoginPage = () => {
 
     const handleSubmit = async e => {
         e.preventDefault();
-        const succeded = await ChatAPI.signIn(username, password);
-        if (succeded) {
+        const succeeded = await ChatAPI.signIn(username, password);
+        if (succeeded) {
             dispatch({ type: "SET_DETAILS", newDetails: ChatAPI.getAuthDetails() });
             history.push("/connect-messenger-react");
         } else {

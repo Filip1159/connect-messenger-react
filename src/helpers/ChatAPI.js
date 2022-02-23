@@ -1,10 +1,11 @@
 import jwt_decode from "jwt-decode";
 import SockJS from "sockjs-client";
 import { Stomp } from "@stomp/stompjs";
-import DateFormatter from "./DateFormatter";
+import DateFormatter from "./MessageTimestamp";
 import axios from "axios";
 
-const baseURL = "https://connectmessenger.lm.r.appspot.com";
+//const baseURL = "https://connectmessenger.lm.r.appspot.com";
+const baseURL = "http://localhost:8080";
 const api = axios.create({ baseURL });
 
 class ChatAPI {

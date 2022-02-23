@@ -1,0 +1,10 @@
+@import "../variables";
+
+.chatsPanel__filling {
+    background-color: $primaryColor;
+    flex-grow: 1;
+	
+	&--roundedCorner {
+		border-top-right-radius: 20px;
+	}
+}

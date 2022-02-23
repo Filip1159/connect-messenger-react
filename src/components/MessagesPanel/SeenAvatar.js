@@ -1,7 +1,7 @@
 import React, { useContext } from "react";
-import { AuthContext } from "../contexts/AuthContext";
-import { ChatContext } from "../contexts/ChatContext";
-import "../styles/SeenAvatar.scss";
+import { AuthContext } from "../../contexts/AuthContext";
+import { ChatContext } from "../../contexts/ChatContext";
+import "../../styles/MessagesPanel/SeenAvatar.scss";
 
 const SeenAvatar = ({ bottom, opacity }) => {
     const { state: { chats, active } } = useContext(ChatContext);

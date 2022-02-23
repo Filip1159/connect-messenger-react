@@ -1,8 +1,8 @@
 import React, { useContext, useEffect } from "react";
 import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
 import Header from "./components/Header";
-import LeftPanel from "./components/LeftPanel";
-import Messages from "./components/Messages";
+import ChatsPanel from "./components/ChatsPanel/ChatsPanel";
+import Messages from "./components/MessagesPanel/Messages";
 import LoginPage from "./components/LoginPage";
 import { AuthContext } from "./contexts/AuthContext";
 import { ChatContext } from "./contexts/ChatContext";
@@ -24,16 +24,18 @@ const App = () => {
     };
 
     useEffect(() => {
-        console.log("authDetails useEffect called");
-        console.log("authDetails = ");
-        console.log(authDetails);
+        const fetchChatsIfUserIsSignedIn = async () => {
+            console.log("authDetails useEffect called");
+            console.log("authDetails = ");
+            console.log(authDetails);
 
-        if (authDetails) {
-            ChatAPI.loadAllChats().then(chats => {
-                dispatch({ type: "SET_CHATS", newChats: chats });
+            if (authDetails) {
+                const chats = await ChatAPI.loadAllChats();
+                dispatch({type: "SET_CHATS", newChats: chats});
                 ChatAPI.initWebsocket(chats, websocketCallback);
-            });
+            }
         }
+        fetchChatsIfUserIsSignedIn();
         // eslint-disable-next-line
     }, [ authDetails ]);
 
@@ -46,7 +48,7 @@ const App = () => {
                 </Route>
                 <ProtectedRoute exact path="/connect-messenger-react">
                     <div className="app__container">
-                        <LeftPanel />
+                        <ChatsPanel />
                         <Messages />
                         <RightPanel />
                     </div>

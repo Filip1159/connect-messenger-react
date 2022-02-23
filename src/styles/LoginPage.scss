@@ -42,6 +42,10 @@
         margin: 10px;
         border: none;
         outline: none;
+        
+        &[type="submit"] {
+            cursor: pointer;
+        }
     }
 
     &__authFailed {
