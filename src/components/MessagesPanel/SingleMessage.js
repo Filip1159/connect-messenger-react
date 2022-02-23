@@ -4,7 +4,7 @@ import {createSingleMessageModifier} from "../../helpers/chatContextUtils";
 import {AuthContext} from "../../contexts/AuthContext";
 import {ChatContext} from "../../contexts/ChatContext";
 
-const SingleMessage = forwardRef(( { index }, refToMessage ) => {
+const SingleMessage = forwardRef(( { index }, ref ) => {
     const { authDetails } = useContext(AuthContext);
     const { state: { chats, active } } = useContext(ChatContext);
     const chat = chats[active];
@@ -18,7 +18,7 @@ const SingleMessage = forwardRef(( { index }, refToMessage ) => {
             <div className="messages__time">
                 {timestamp.displayDayIfDifferent() + timestamp.currentToHourMinute()}
             </div>}
-            <div ref={refToMessage} id={`messageId${message.id}`} className={`messages__singleMessage${modifier}`}>
+            <div ref={ref} id={`messageId${message.id}`} className={`messages__singleMessage${modifier}`}>
                 {message.content}
                 <div className="messages__singleMessage__tooltip">{timestamp.currentToPretty()}</div>
             </div>

@@ -2,7 +2,8 @@ import MessageTimestamp from "./MessageTimestamp";
 
 export const getRecipient = (chat, authDetails) => {
     if (!chat || !authDetails) return;
-    return chat.users[chat.users[0].id !== authDetails.id ? 0 : 1];
+    const recipientIndex = chat.users[0].id !== authDetails.id ? 0 : 1;
+    return chat.users[recipientIndex];
 }
 
 export const getLastMessage = (chat) => {

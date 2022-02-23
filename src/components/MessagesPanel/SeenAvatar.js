@@ -2,20 +2,26 @@ import React, { useContext } from "react";
 import { AuthContext } from "../../contexts/AuthContext";
 import { ChatContext } from "../../contexts/ChatContext";
 import "../../styles/MessagesPanel/SeenAvatar.scss";
+import {getRecipient} from "../../helpers/chatContextUtils";
+
+export const AVATAR_HEIGHT = 20;
 
 const SeenAvatar = ({ bottom, opacity }) => {
     const { state: { chats, active } } = useContext(ChatContext);
-    const { authDetails: { id } } = useContext(AuthContext);
-    const username = chats[active]?.users[chats[active]?.users[0]?.id !== id ? 0 : 1].username;
+    const { authDetails } = useContext(AuthContext);
+
+    if (chats.length === 0) return "...";
+
+    const recipientUsername = getRecipient(chats[active], authDetails).username;
     
     return (
         <img
             className="seenAvatar"
-            src={`/connect-messenger-react/images/avatars/${username}.png`}
+            src={`/connect-messenger-react/images/avatars/${recipientUsername}.png`}
             alt="seen avatar"
             style={{
-                bottom: `${bottom}px`,
-                opacity: Number.isNaN(opacity) ? 0 : opacity  /* go from top to bottom, from full color to full transparent */
+                top: `${bottom - AVATAR_HEIGHT}px`,
+                opacity: Number.isNaN(opacity) ? 0 : opacity
             }}
         />
     )

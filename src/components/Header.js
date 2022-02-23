@@ -23,7 +23,7 @@ const Header = () => {
                     ChatAPI.signOut();
                     dispatch({ type: "RESET_DETAILS" });
                     dispatch_chats({ type: "CLEAR" });
-                    history.replace("/login");
+                    history.replace("/connect-messenger-react/login");
                 }}/>
             }
         </header>

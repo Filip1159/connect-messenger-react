@@ -27,6 +27,7 @@ const Messages = () => {
 
     /* callback ref */
     const setLastMessageRef = useCallback(node => {
+        console.log("callback called");
         if (node) {
             lastMessageRef.current = node;
             if (previousBottom.current) {
@@ -73,7 +74,7 @@ const Messages = () => {
     const renderedMessages = chat.messages.map((msg, i) => {
         const reference = recipientLastMessage === msg.id ? setLastMessageRef : null;
         return (
-            <SingleMessage key={i} refToMessage={reference} index={i}/>
+            <SingleMessage key={i} ref={reference} index={i}/>
         );
     });
 
@@ -88,7 +89,7 @@ const Messages = () => {
             <div className="messages__container__displayContent">
                 {renderedMessages}
             </div>
-            <SeenAvatarsPanel bottom={window.innerHeight - bottom}/>
+            <SeenAvatarsPanel bottom={bottom}/>
         </div>
         <NewMessageInput/>
     </div>

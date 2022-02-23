@@ -1,5 +1,5 @@
 import React, { useContext, useEffect } from "react";
-import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
+import {BrowserRouter as Router, Redirect, Route, Switch} from "react-router-dom";
 import Header from "./components/Header";
 import ChatsPanel from "./components/ChatsPanel/ChatsPanel";
 import Messages from "./components/MessagesPanel/Messages";
@@ -43,7 +43,7 @@ const App = () => {
         <Router>
             <Header />
             <Switch>
-                <Route path="/connect-messenger-react/login" >
+                <Route exact path="/connect-messenger-react/login" >
                     <LoginPage />
                 </Route>
                 <ProtectedRoute exact path="/connect-messenger-react">
@@ -53,7 +53,12 @@ const App = () => {
                         <RightPanel />
                     </div>
                 </ProtectedRoute>
-                <Route path=""/>
+                <Route path="">
+                    {
+                        authDetails ? <Redirect to="/connect-messenger-react" />:
+                         <Redirect to="/connect-messenger-react/login"/>
+                    }
+                </Route>
             </Switch>
         </Router>
     );
