@@ -4,7 +4,7 @@ import { Stomp } from "@stomp/stompjs";
 import DateFormatter from "./DateFormatter";
 import axios from "axios";
 
-const baseURL = "https://connectmessenger.lm.r.appspot.com";
+const baseURL = "http://localhost:8080"
 const api = axios.create({ baseURL });
 
 class ChatAPI {

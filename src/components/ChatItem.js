@@ -10,7 +10,7 @@ const ChatItem = ({chat, modifier, onClick }) => {
     return (
         <div className={`chatItem${modifier}`} onClick={onClick}>
             <img
-                src={`/connect-messenger-react/images/avatars/${user.username}.png`}
+                src={`/images/avatars/${user.username}.png`}
                 alt="User avatar"
             />
             <div className="chatItem__chatData">
