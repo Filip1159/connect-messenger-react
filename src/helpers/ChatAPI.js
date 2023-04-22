@@ -152,20 +152,20 @@ class ChatAPI {
         );
     };
 
-    static postMessage(chatId, content) {
+    static postMessage(chatId, type, content) {
         if (!this.isSignedIn()) {
             throw new Error("User isn't signed in!");
         }
-        api.post("/message",
-            {
-                chatId,
-                userId: this.getAuthDetails().id,
-                time: DateFormatter.nowToSql(),
-                content
-            },
+        const formData = new FormData()
+        formData.append('chatId', chatId)
+        formData.append('userId', this.getAuthDetails().id)
+        formData.append('time', DateFormatter.nowToSql())
+        formData.append('type', type)
+        formData.append(type === 'TEXT' ? 'textContent' : 'fileContent', content)
+        console.log(formData)
+        api.post("/message", formData,
             {
                 headers: {
-                    "Content-Type": "application/json",
                     Authorization: localStorage.getItem("token")
                 }
             }
