@@ -13,6 +13,33 @@
             font-size: $smallMessageTextSize !important;  /* for some reason browser prefers input[type="text"] property equals to 18px */
         }
     }
+
+    &__fileInput {
+        opacity: 0;
+        width: 1px;
+    }
+
+    &__fileInputLabel {
+
+        &__img {
+            width: 40px;
+            height: 40px;
+            max-width: 40px;
+            max-height: 40px;
+            min-height: 40px;
+            min-width: 40px;
+            margin: 20px 0 20px 20px;
+            cursor: pointer;
+            transition: .2s;
+            border-radius: 4px;
+
+            &:hover {
+                -webkit-filter: brightness(0);
+                filter: brightness(0);
+                width: 45px;
+            }
+        }
+    }
     
     &__btn {
         width: 35px;
