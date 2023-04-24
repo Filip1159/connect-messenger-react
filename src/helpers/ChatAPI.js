@@ -71,7 +71,7 @@ class ChatAPI {
         this.authDetails = null;
     }
 
-    static initWebsocket(chats, callback) {
+    static initWebsocket(chats, messageCallback, newChatCallback) {
         if (!this.isSignedIn()) {
             throw new Error("User isn't signed in!");
         }
@@ -87,8 +87,9 @@ class ChatAPI {
             },
             () => {
                 this.password = undefined;
+                this.stompClient.subscribe(`/topic/new-chats/${this.authDetails.id}`, newChatCallback)
                 chats.forEach(chat => {
-                    this.stompClient.subscribe(`/topic/messages/${chat.id}`, callback);
+                    this.stompClient.subscribe(`/topic/messages/${chat.id}`, messageCallback);
                 })
             }
         )
@@ -182,6 +183,22 @@ class ChatAPI {
             }
         });
         return res.data;
+    }
+
+    static async createChat(recipientId) {
+        if (!this.isSignedIn()) {
+            throw new Error("User isn't signed in")
+        }
+        const res = await api.post('/chats', {
+                userIds: [this.getAuthDetails().id, recipientId]
+            },
+            {
+            headers: {
+                Authorization: localStorage.getItem("token")
+            },
+
+        })
+        return res.data
     }
 }
 

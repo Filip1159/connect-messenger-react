@@ -16,6 +16,10 @@ const Search = ({ roundedCorner }) => {
         } else setUsersQueryResult([]);
     }
 
+    const createNewChat = async recipientId => {
+        ChatAPI.createChat(recipientId)
+    }
+
     return (
         <div className="search" style={{borderBottomRightRadius: roundedCorner ? "20px" : 0}}>
             <FontAwesomeIcon icon={faSearch} size="5x" />
@@ -24,7 +28,11 @@ const Search = ({ roundedCorner }) => {
                 <input type="text" className="search__queryInput" onInput={handleInput}/>
                 <div className="search__queryResult">
                     <ul>{
-                        usersQueryResult.map(u => <li key={u.username}>{`${u.name} ${u.surname}`}</li>)
+                        usersQueryResult.map(u => (
+                            <li key={u.username} onClick={() => createNewChat(u.id)}>
+                                {`${u.name} ${u.surname}`}
+                            </li>
+                        ))
                     }</ul>
                 </div>
             </div>

@@ -14,14 +14,19 @@ const App = () => {
     const { dispatch } = useContext(ChatContext);
     const { authDetails } = useContext(AuthContext);
 
-    const websocketCallback = incoming => {
+    const messageWebsocketCallback = incoming => {
         const parsed = JSON.parse(incoming.body);
         if (parsed.content) { // got new message
             dispatch({ type: "ADD_MESSAGE", newMessage: parsed });
         } else {
             dispatch({ type: "UPDATE_STATUS", newStatus: parsed });
         }
-    };
+    }
+
+    const newChatWebsocketCallback = incoming => {
+        const parsedChat = JSON.parse(incoming.body)
+        console.log(parsedChat)
+    }
 
     useEffect(() => {
         console.log("authDetails useEffect called");
@@ -31,7 +36,7 @@ const App = () => {
         if (authDetails) {
             ChatAPI.loadAllChats().then(chats => {
                 dispatch({ type: "SET_CHATS", newChats: chats });
-                ChatAPI.initWebsocket(chats, websocketCallback);
+                ChatAPI.initWebsocket(chats, messageWebsocketCallback);
             });
         }
         // eslint-disable-next-line
