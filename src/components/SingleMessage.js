@@ -32,7 +32,7 @@ const SingleMessage = React.forwardRef(({message, modifier, dateFormatter}, ref)
                     </div>
                     :
                     <div ref={ref} id={`messageId${message.id}`} className={`messages__singleMessage${modifier} messages__singleMessage--img`}>
-                        <img src={imageData} alt="" className="messages__singleMessage__img"/>
+                        <img src={imageData} alt="" className="messages__singleMessage__img" />
                     </div>
             }
         </>

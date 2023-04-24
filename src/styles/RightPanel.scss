@@ -4,13 +4,12 @@
 .rightPanel {
     background: $backgroundColor;
     @include setFlex(column, 1);
-    @include fancyScrollbar(right);
-    max-height: calc(100vh - 125px);
+    max-height: calc(100vh - 123px);
     min-width: 350px;
     max-width: 350px;
     padding: 40px 20px 20px 40px;
     cursor: default;
-    overflow-y: scroll;
+    overflow-y: auto;
 
     @media (max-width: 1200px) {
         display: none;

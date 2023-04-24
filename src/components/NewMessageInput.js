@@ -16,6 +16,8 @@ const NewMessageInput = () => {
         if ((type === 'TEXT' && textContent) || (type === 'FILE' && fileContent)) {
             ChatAPI.postMessage(chats[active].id, type, type === 'TEXT' ? textContent : fileContent);
             setTextContent("");
+            setFileContent(null)
+            setFileInputIcon("/images/image_icon.png")
         }
     }
 
@@ -41,7 +43,7 @@ const NewMessageInput = () => {
                        setTextContent(e.target.value)
                        setFileContent(null)
                        setType('TEXT')
-                       setFileInputIcon("/images/send.png")
+                       setFileInputIcon("/images/image_icon.png")
                    }}/>
             <input type="image" className="newMessageInput__btn" src="/images/send.png" alt="Send"/>
         </form>

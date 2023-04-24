@@ -126,9 +126,6 @@ const Messages = () => {
             >
                 <div className="messages__container__displayContent">
                    {renderedMessages}
-                    <div className="messages__singleMessage messages__singleMessage--img">
-                        <img src="/images/slide1.png" alt="" className="messages__singleMessage__img" />
-                    </div>
                 </div>
                 <SeenAvatarsPanel bottom={window.innerHeight-bottom} />
             </div>
