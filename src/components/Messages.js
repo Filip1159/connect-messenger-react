@@ -52,6 +52,12 @@ const Messages = () => {
         if (myLastMessage && lastMessage && myLastMessage !== lastMessage) { // there are some messages unseen: myLastMessage === lastMessageSeenByMe
             ChatAPI.updateStatus(chat.id, lastMessage);
         }
+        else if (chat) {
+            const myStatus = chat.status[chat.status[0].id.userId === authDetails.id ? 0 : 1];
+            if (!myStatus.messageId && chat.messages.length > 0) {
+                ChatAPI.updateStatus(chat.id, chat.messages[chat.messages.length - 1].id);
+            }
+        }
         // eslint-disable-next-line
     }, [myLastMessage, lastMessage]);
 

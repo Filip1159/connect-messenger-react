@@ -1,22 +1,31 @@
-import React, { useState } from "react";
+import React, {useContext, useState} from "react";
 import "../styles/Search.scss";
 import ChatAPI from "../helpers/ChatAPI";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSearch } from "@fortawesome/free-solid-svg-icons";
+import {AuthContext} from "../contexts/AuthContext";
+import {ChatContext} from "../contexts/ChatContext";
+import useChat from "../hooks/useChat";
 
 const Search = ({ roundedCorner }) => {
     const [ usersQueryResult, setUsersQueryResult ] = useState([]);
+    const {state: {chats}} = useContext(ChatContext);
+
+    const participatesInChat = (chat, userId) =>
+        chat.status[0].id.userId === userId || chat.status[1].id.userId === userId
 
     const handleInput = async e => {
         const query = e.target.value;
+        console.log(chats)
         if (query !== "") {
-            ChatAPI.searchUsersByQuery(query).then(results => {
-                setUsersQueryResult(results);
+            ChatAPI.searchUsersByQuery(query).then(users => {
+                setUsersQueryResult(users.filter(user => !chats.some(chat => participatesInChat(chat, user.id))))
             });
         } else setUsersQueryResult([]);
     }
 
     const createNewChat = async recipientId => {
+        setUsersQueryResult([])
         ChatAPI.createChat(recipientId)
     }
 
