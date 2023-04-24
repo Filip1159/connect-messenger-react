@@ -3,7 +3,7 @@
 
 .messages {
     background: $backgroundColor;
-    @include setFlex(column, 0, flex-end);
+    @include setFlex(column, 1, flex-end);
     height: 100%;
 
     &__container {
@@ -142,4 +142,14 @@
             font-size: $smallTimeTextSize;
         }
     }
+}
+
+.noMessages {
+    color: $secondaryTextColor;
+    font-size: $messageTextSize;
+    margin-top: 26px;
+    display: flex;
+    flex: 1;
+    align-self: center;
+
 }

@@ -1,5 +1,6 @@
 import React, {useEffect, useState} from "react";
 import axios from "axios";
+import messages from "./Messages";
 
 const SingleMessage = React.forwardRef(({message, modifier, dateFormatter}, ref) => {
     const [imageData, setImageData] = useState('')
@@ -12,11 +13,13 @@ const SingleMessage = React.forwardRef(({message, modifier, dateFormatter}, ref)
         })
 
     useEffect(() => {
+        console.log('fetching image')
+        console.log(message)
         if (message.type === 'FILE') {
             fetchImage()
                 .then(res => setImageData(`data:image/jpeg;base64,${res.data}`))
         }
-    }, [])
+    }, [message])
 
     return (
         <>

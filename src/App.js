@@ -16,6 +16,7 @@ const App = () => {
 
     const messageWebsocketCallback = incoming => {
         const parsed = JSON.parse(incoming.body);
+        console.log(parsed)
         if (parsed.content) { // got new message
             dispatch({ type: "ADD_MESSAGE", newMessage: parsed });
         } else {
@@ -26,6 +27,8 @@ const App = () => {
     const newChatWebsocketCallback = incoming => {
         const parsedChat = JSON.parse(incoming.body)
         console.log(parsedChat)
+        dispatch({ type: "ADD_CHAT", newChat: parsedChat })
+        ChatAPI.subscribeToChat(parsedChat.id, messageWebsocketCallback)
     }
 
     useEffect(() => {
@@ -36,7 +39,7 @@ const App = () => {
         if (authDetails) {
             ChatAPI.loadAllChats().then(chats => {
                 dispatch({ type: "SET_CHATS", newChats: chats });
-                ChatAPI.initWebsocket(chats, messageWebsocketCallback);
+                ChatAPI.initWebsocket(chats, messageWebsocketCallback, newChatWebsocketCallback);
             });
         }
         // eslint-disable-next-line
