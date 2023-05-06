@@ -1,6 +1,6 @@
 import React, { useContext } from "react";
 import "../styles/Header.scss";
-import { useHistory } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import ChatAPI from "../helpers/ChatAPI";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPowerOff } from '@fortawesome/free-solid-svg-icons'
@@ -8,7 +8,7 @@ import { AuthContext } from "../contexts/AuthContext";
 import { ChatContext } from "../contexts/ChatContext";
 
 const Header = () => {
-    const history = useHistory();
+    const navigate = useNavigate();
     const { authDetails, dispatch } = useContext(AuthContext);
     const { dispatch: dispatch_chats } = useContext(ChatContext);
 
@@ -23,7 +23,7 @@ const Header = () => {
                     ChatAPI.signOut();
                     dispatch({ type: "RESET_DETAILS" });
                     dispatch_chats({ type: "CLEAR" });
-                    history.replace("/login");
+                    navigate('/login')
                 }}/>
             }
         </header>

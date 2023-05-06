@@ -1,6 +1,6 @@
 import React, { useContext, useState } from "react";
 import "../styles/LoginPage.scss";
-import { useHistory, Redirect } from "react-router-dom";
+import { useNavigate, Navigate } from "react-router-dom";
 import { AuthContext } from "../contexts/AuthContext";
 import ChatAPI from "../helpers/ChatAPI";
 
@@ -9,14 +9,14 @@ const LoginPage = () => {
     const [ authFailed, setAuthFailed ] = useState(false);
     const [ username, setUsername ] = useState("");
     const [ password, setPassword ] = useState("");
-    const history = useHistory();
+    const navigate = useNavigate()
 
     const handleSubmit = async e => {
         e.preventDefault();
         const succeeded = await ChatAPI.signIn(username, password);
         if (succeeded) {
             dispatch({ type: "SET_DETAILS", newDetails: ChatAPI.getAuthDetails() });
-            history.push("/");
+            navigate("/");
         } else {
             console.log("Auth failed");
             setAuthFailed(true);
@@ -25,7 +25,7 @@ const LoginPage = () => {
 
     return (
         (ChatAPI.isSignedIn() ? 
-            <Redirect to="/" /> : 
+            <Navigate to="/" /> :
             <>
                 <div className="loginPage">
                     <span className="loginPage__title">
