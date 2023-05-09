@@ -65,45 +65,37 @@ export const MessagesSection = () => {
         const activeMessages = chat.messages;
         const date = DateFormatter.sqlToDateObject(m.time);
 
-        let prevDate;
-        if (i === 0) prevDate = new Date(1970);
-        else {
-            const prevM = activeMessages[i - 1];
-            prevDate = DateFormatter.sqlToDateObject(prevM.time);
-        }
+        const len = activeMessages.length
 
-        const len = activeMessages.length;
-        let nextDate;
-        if (i === len - 1) nextDate = new Date(2038, 1, 19);
-        else {
-            const nextM = activeMessages[i + 1];
-            nextDate = DateFormatter.sqlToDateObject(nextM.time);
-        }
+        const previousDate = i === 0 ? new Date(1970) : DateFormatter.sqlToDateObject(activeMessages[i - 1].time)
+        const isPreviousMessageAtLeast5MinutesAgo = date.getTime() - previousDate.getTime() >= 5*60*1000
+        const isPreviousMessageAtLeastOneDayAgo = date.getTime() - previousDate.getTime() >= 24*60*60*1000
 
-        const df = new DateFormatter(prevDate, date, nextDate);
+        const nextDate = i === len - 1 ? new Date(2038, 1, 19) : DateFormatter.sqlToDateObject(activeMessages[i + 1].time)
+        const isNextMessageAtLeast5MinutesAfter = nextDate.getTime() - date.getTime() >= 5*60*1000
 
-        let modifier = "";
-        /* check who wrote this message */
-        if (m.userId === authDetails.id) modifier += " singleMessage--myMsg";
-        else modifier += " singleMessage--receivedMsg";
+        const isTopSticky = len > 1 &&
+            ((i === len - 1 && activeMessages[len - 2].userId === activeMessages[len - 1].userId && !isPreviousMessageAtLeast5MinutesAgo) ||
+            (i !== 0 && i !== len - 1 && activeMessages[i - 1]?.userId === m.userId && !isPreviousMessageAtLeastOneDayAgo))
 
-        if (len > 1) {
-            if (i === 0) {
-                if (activeMessages[1].userId === activeMessages[0].userId && df.is5MinDiffAfter()) // if 1st and 2nd messages have the same sender
-                    modifier += " singleMessage--bottomSticky";
-            } else if (i === len - 1) {
-                if (activeMessages[len - 2].userId === activeMessages[len - 1].userId && df.is5MinDiffBefore())  // if two last messages have the same sender
-                    modifier += " singleMessage--topSticky";
-            } else { /* code below runs if i !== 0 and i !== length-1 */
-                if (activeMessages[i - 1]?.userId === m.userId && df.is5MinDiffBefore()) modifier += " singleMessage--topSticky";
-                if (activeMessages[i + 1]?.userId === m.userId && df.is5MinDiffAfter()) modifier += " singleMessage--bottomSticky";
-            }
-        }
+        const isBottomSticky = len > 1 &&
+            ((i === 0 && activeMessages[1].userId === activeMessages[0].userId && !isNextMessageAtLeast5MinutesAfter) ||
+            (i !== 0 && i !== len - 1 && activeMessages[i + 1]?.userId === m.userId && !isNextMessageAtLeast5MinutesAfter))
 
         const reference = recipientLastMessage === m.id ? setLastMessageRef : null;  // inserts lastMessageRef to last message displayed by second user
 
         return (
-            <Message key={i} ref={reference} message={m} modifier={modifier} dateFormatter={df}/>
+            <Message
+                key={i}
+                ref={reference}
+                message={m}
+                isMine={m.userId === authDetails.id}
+                isTopSticky={isTopSticky}
+                isBottomSticky={isBottomSticky}
+                shouldDisplayDate={isPreviousMessageAtLeast5MinutesAgo}
+                shouldDisplayDay={isPreviousMessageAtLeastOneDayAgo}
+                date={date}
+            />
         );
     });
 

@@ -1,11 +1,4 @@
 class DateFormatter {
-
-    constructor(prevDate, currentDate, nextDate) {
-        this.prevDate = prevDate;
-        this.currentDate = currentDate;
-        this.nextDate = nextDate;
-    }
-
     static #days = ["Niedziela", "Poniedziałek", "Wtorek", "Środa", "Czwartek", "Piątek", "Sobota"];
 
     static nowToSql() {
@@ -28,33 +21,24 @@ class DateFormatter {
         return new Date(year, month-1, day, hour, minute);
     }
 
-    currentToHourMinute() {
-        let hr = this.currentDate.getHours();
+    static toUiTooltipFormat(date) {
+        let mon = date.getMonth() + 1
+        let day = date.getDate()
+        let h = date.getHours()
+        let m = date.getMinutes()
+        if (mon < 10) mon = "0" + mon
+        if (day < 10) day = "0" + day
+        if (h < 10) h = "0" + h
+        if (m < 10) m = "0" + m
+        return `${DateFormatter.#days[date.getDay()]}, ${date.getFullYear()}.${mon}.${day}, ${h}:${m}`
+    }
+
+    static toUiFormat(date, shouldDisplayDay) {
+        let hr = date.getHours();
         if (hr < 10) hr = "0" + hr;
-        let min = this.currentDate.getMinutes();
+        let min = date.getMinutes();
         if (min < 10) min = "0" + min;
-        return `${hr}:${min}`;
-    }
-
-    currentToPretty() {
-        let mon = this.currentDate.getMonth()+1, day = this.currentDate.getDate(), h = this.currentDate.getHours(), m = this.currentDate.getMinutes();
-        if (mon < 10) mon = "0" + mon;
-        if (day < 10) day = "0" + day;
-        if (h < 10) h = "0" + h;
-        if (m < 10) m = "0" + m;
-        return `${DateFormatter.#days[this.currentDate.getDay()]}, ${this.currentDate.getFullYear()}.${mon}.${day}, ${h}:${m}`;
-    }
-
-    displayDayIfDifferent() {
-        return this.currentDate.getTime() - this.prevDate.getTime() > 24*60*60*1000 ? `${DateFormatter.#days[this.currentDate.getDay()]}, ` : ""
-    }
-
-    is5MinDiffBefore() {
-        return this.currentDate.getTime() - this.prevDate.getTime() < 5*60*1000;
-    }
-
-    is5MinDiffAfter() {
-        return this.nextDate.getTime() - this.currentDate.getTime() < 5*60*1000;
+        return (shouldDisplayDay ? `${DateFormatter.#days[date.getDay()]}, ` : '') + hr + ':' + min
     }
 
 }
