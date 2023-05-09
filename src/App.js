@@ -1,12 +1,12 @@
 import React, {useContext, useEffect} from "react";
 import {BrowserRouter as Router, Route, Routes} from "react-router-dom";
 import Header from "./components/header/Header";
-import { ChatsSection } from "./components/chatsSection/ChatsSection";
-import { MessagesSection } from "./components/messagesSection/MessagesSection";
+import {ChatsSection} from "./components/chatsSection/ChatsSection";
+import {MessagesSection} from "./components/messagesSection/MessagesSection";
 import LoginPage from "./components/loginPage/LoginPage";
 import {AuthContext} from "./store/auth/AuthContext";
 import {ChatContext} from "./store/chats/ChatContext";
-import RightPanel from "./components/userDetailsSection/RightPanel";
+import {UserDetailsSection} from "./components/userDetailsSection/UserDetailsSection";
 import ChatAPI from "./store/ChatAPI";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -54,7 +54,7 @@ const App = () => {
                     <div className="app__container">
                         <ChatsSection/>
                         <MessagesSection/>
-                        <RightPanel/>
+                        <UserDetailsSection/>
                     </div>
                 </ProtectedRoute>
                 }/>

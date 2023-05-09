@@ -1,7 +1,7 @@
 @import "../../styles/variables";
 @import "../../styles/mixins";
 
-.rightPanel {
+.userDetailsSection {
     background: $backgroundColor;
     @include setFlex(column, 1);
     max-height: calc(100vh - 123px);
