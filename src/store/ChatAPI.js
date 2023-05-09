@@ -1,7 +1,7 @@
 import jwt_decode from "jwt-decode";
 import SockJS from "sockjs-client";
 import { Stomp } from "@stomp/stompjs";
-import DateFormatter from "./DateFormatter";
+import DateFormatter from "../DateFormatter";
 import axios from "axios";
 
 const baseURL = `http://${window.location.hostname}:8080`

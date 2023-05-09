@@ -1,6 +1,6 @@
 import React, { useContext } from "react";
-import { AuthContext } from "../contexts/AuthContext";
-import "../styles/RightPanel.scss";
+import { AuthContext } from "../../store/auth/AuthContext";
+import "./RightPanel.scss";
 
 const RightPanel = () => {
     const { authDetails } = useContext(AuthContext);

@@ -1,17 +1,17 @@
 import React, {useCallback, useContext, useEffect, useRef, useState} from "react";
-import {AuthContext} from "../contexts/AuthContext";
-import {ChatContext} from "../contexts/ChatContext";
-import DateFormatter from "../helpers/DateFormatter";
-import "../styles/Messages.scss";
-import NewMessageInput from "./NewMessageInput";
-import useLastMessage from "../hooks/useLastMessage";
-import useChat from "../hooks/useChat";
-import SeenAvatarsPanel from "./SeenAvatarsPanel";
-import fall from "../helpers/FallingAvatar";
-import ChatAPI from "../helpers/ChatAPI";
-import SingleMessage from "./SingleMessage";
+import {AuthContext} from "../../store/auth/AuthContext";
+import {ChatContext} from "../../store/chats/ChatContext";
+import DateFormatter from "../../DateFormatter";
+import "./MessagesSection.scss";
+import NewMessageInput from "./newMessageInput/NewMessageInput";
+import useLastMessage from "./hooks/useLastMessage";
+import useChat from "./hooks/useChat";
+import SeenAvatarsPanel from "./seenAvatarPanel/SeenAvatarsPanel";
+import fall from "./seenAvatarPanel/FallingAvatar";
+import ChatAPI from "../../store/ChatAPI";
+import { Message } from "./message/Message";
 
-const Messages = () => {
+export const MessagesSection = () => {
     const {state: {chats, active}} = useContext(ChatContext);
     const {authDetails} = useContext(AuthContext);
     const chat = useChat(chats, active);
@@ -84,26 +84,26 @@ const Messages = () => {
 
         let modifier = "";
         /* check who wrote this message */
-        if (m.userId === authDetails.id) modifier += " messages__singleMessage--myMsg";
-        else modifier += " messages__singleMessage--receivedMsg";
+        if (m.userId === authDetails.id) modifier += " singleMessage--myMsg";
+        else modifier += " singleMessage--receivedMsg";
 
         if (len > 1) {
             if (i === 0) {
                 if (activeMessages[1].userId === activeMessages[0].userId && df.is5MinDiffAfter()) // if 1st and 2nd messages have the same sender
-                    modifier += " messages__singleMessage--bottomSticky";
+                    modifier += " singleMessage--bottomSticky";
             } else if (i === len - 1) {
                 if (activeMessages[len - 2].userId === activeMessages[len - 1].userId && df.is5MinDiffBefore())  // if two last messages have the same sender
-                    modifier += " messages__singleMessage--topSticky";
+                    modifier += " singleMessage--topSticky";
             } else { /* code below runs if i !== 0 and i !== length-1 */
-                if (activeMessages[i - 1]?.userId === m.userId && df.is5MinDiffBefore()) modifier += " messages__singleMessage--topSticky";
-                if (activeMessages[i + 1]?.userId === m.userId && df.is5MinDiffAfter()) modifier += " messages__singleMessage--bottomSticky";
+                if (activeMessages[i - 1]?.userId === m.userId && df.is5MinDiffBefore()) modifier += " singleMessage--topSticky";
+                if (activeMessages[i + 1]?.userId === m.userId && df.is5MinDiffAfter()) modifier += " singleMessage--bottomSticky";
             }
         }
 
         const reference = recipientLastMessage === m.id ? setLastMessageRef : null;  // inserts lastMessageRef to last message displayed by second user
 
         return (
-            <SingleMessage key={i} ref={reference} message={m} modifier={modifier} dateFormatter={df}/>
+            <Message key={i} ref={reference} message={m} modifier={modifier} dateFormatter={df}/>
         );
     });
 
@@ -147,5 +147,3 @@ const Messages = () => {
         </div>
     );
 }
-
-export default Messages;

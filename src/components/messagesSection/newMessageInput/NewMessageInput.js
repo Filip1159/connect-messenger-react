@@ -1,7 +1,7 @@
 import React, { useContext, useState } from "react";
-import { ChatContext } from "../contexts/ChatContext";
-import "../styles/NewMessageInput.scss";
-import ChatAPI from "../helpers/ChatAPI";
+import { ChatContext } from "../../../store/chats/ChatContext";
+import "./NewMessageInput.scss";
+import ChatAPI from "../../../store/ChatAPI";
 
 const NewMessageInput = () => {
     const [ textContent, setTextContent ] = useState("");

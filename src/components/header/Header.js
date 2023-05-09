@@ -1,11 +1,11 @@
 import React, { useContext } from "react";
-import "../styles/Header.scss";
+import "./Header.scss";
 import { useNavigate } from "react-router-dom";
-import ChatAPI from "../helpers/ChatAPI";
+import ChatAPI from "../../store/ChatAPI";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPowerOff } from '@fortawesome/free-solid-svg-icons'
-import { AuthContext } from "../contexts/AuthContext";
-import { ChatContext } from "../contexts/ChatContext";
+import { AuthContext } from "../../store/auth/AuthContext";
+import { ChatContext } from "../../store/chats/ChatContext";
 
 const Header = () => {
     const navigate = useNavigate();

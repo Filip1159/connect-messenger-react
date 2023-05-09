@@ -1,8 +1,8 @@
 import React, { useContext, useState } from "react";
-import "../styles/LoginPage.scss";
+import "./LoginPage.scss";
 import { useNavigate, Navigate } from "react-router-dom";
-import { AuthContext } from "../contexts/AuthContext";
-import ChatAPI from "../helpers/ChatAPI";
+import { AuthContext } from "../../store/auth/AuthContext";
+import ChatAPI from "../../store/ChatAPI";
 
 const LoginPage = () => {
     const { dispatch } = useContext(AuthContext);

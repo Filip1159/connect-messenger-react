@@ -1,10 +1,10 @@
 import { useContext } from "react";
-import { ChatContext } from "../contexts/ChatContext";
-import Search from "./Search";
-import ChatItem from "./ChatItem";
-import "../styles/LeftPanel.scss";
+import { ChatContext } from "../../store/chats/ChatContext";
+import { Search } from "./searchField/Search";
+import { ChatItem } from "./chatItem/ChatItem";
+import "./ChatsSection.scss";
 
-const LeftPanel = () => {
+export const ChatsSection = () => {
     const { state: { chats, active }, dispatch } = useContext(ChatContext);
 
     const renderedChats = chats.map((c, i) => {
@@ -24,17 +24,15 @@ const LeftPanel = () => {
     });
 
     return (
-        <div className="leftPanel">
-            <div className="leftPanel__flipped">
+        <div className="chatsSection">
+            <div className="chatsSection__flipped">
                 <Search roundedCorner={active === 0} />
                 {renderedChats}
                 <div
-                    className="leftPanel__foo"
+                    className="chatsSection__spacer"
                     style={active === chats?.length - 1 ? {borderTopRightRadius: '20px'} : {}}
                 />
             </div>
         </div>
     )
 }
-
-export default LeftPanel;

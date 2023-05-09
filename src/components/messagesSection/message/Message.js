@@ -1,8 +1,8 @@
 import React, {useEffect, useState} from "react";
 import axios from "axios";
-import messages from "./Messages";
+import "./Message.scss"
 
-const SingleMessage = React.forwardRef(({message, modifier, dateFormatter}, ref) => {
+export const Message = React.forwardRef(({message, modifier, dateFormatter}, ref) => {
     const [imageData, setImageData] = useState('')
 
     const fetchImage = async () =>
@@ -24,22 +24,20 @@ const SingleMessage = React.forwardRef(({message, modifier, dateFormatter}, ref)
     return (
         <>
             {!dateFormatter.is5MinDiffBefore() &&
-                <div className="messages__time">
+                <div className="singleMessage__time">
                     {dateFormatter.displayDayIfDifferent() + dateFormatter.currentToHourMinute()}
                 </div>}
             {
                 message.type !== 'FILE' ?
-                    <div ref={ref} id={`messageId${message.id}`} className={`messages__singleMessage${modifier}`}>
+                    <div ref={ref} id={`messageId${message.id}`} className={`singleMessage${modifier}`}>
                         {message.content}
-                        <div className="messages__singleMessage__tooltip">{dateFormatter.currentToPretty()}</div>
+                        <div className="singleMessage__tooltip">{dateFormatter.currentToPretty()}</div>
                     </div>
                     :
-                    <div ref={ref} id={`messageId${message.id}`} className={`messages__singleMessage${modifier} messages__singleMessage--img`}>
-                        <img src={imageData} alt="" className="messages__singleMessage__img" />
+                    <div ref={ref} id={`messageId${message.id}`} className={`singleMessage${modifier} singleMessage--img`}>
+                        <img src={imageData} alt="" className="singleMessage__img" />
                     </div>
             }
         </>
     );
 });
-
-export default SingleMessage;

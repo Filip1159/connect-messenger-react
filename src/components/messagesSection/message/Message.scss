@@ -1,0 +1,122 @@
+@import "src/styles/variables";
+@import "src/styles/mixins";
+
+.singleMessage {
+    $self: &;
+    position: relative;
+    border-radius: 20px;
+    letter-spacing: 1px;
+    padding: 10px 20px;
+    margin: 10px;
+    max-width: 60%;
+    font-size: $messageTextSize;
+    cursor: default;
+
+    @media (max-width: 576px) {
+        font-size: $smallMessageTextSize;
+        padding: 5px 10px;
+        border-radius: 10px;
+    }
+
+    &:hover > .singleMessage__tooltip {
+        opacity: 100%;
+        transition: opacity $transitionTime linear 1s;  /* property duration type delay */
+    }
+
+    &__tooltip {
+        background: $tooltipBackgroundColor;
+        font-size: $tooltipTextSize;
+        position: absolute;
+        top: 10px;
+        border-radius: 5px;
+        padding: 8px;
+        opacity: 0;
+        z-index: 100;
+
+        @media (max-width: 576px) {
+            display: none;
+        }
+
+        &::after {
+            content: "";
+            position: absolute;
+            top: 8px;
+            border-width: 5px;
+            border-style: solid;
+        }
+    }
+
+    &__img {
+        max-width: 100%;
+        max-height: 30vh;
+        border-radius: inherit;
+    }
+
+    &--img {
+        padding: 0;
+        background-color: #282c34 !important;
+    }
+
+    &--receivedMsg {
+        background: $secondaryColor;
+        margin-left: 10px;
+        margin-right: auto;
+        color: $whiteTextColor;
+
+        #{ $self }__tooltip {
+            left: calc(100% + 10px);
+
+            &::after {
+                right: 100%;
+                border-color: transparent $tooltipBackgroundColor transparent transparent;
+            }
+        }
+    }
+
+    &--receivedMsg#{&}--topSticky {
+        margin-top: 1px;
+        border-top-left-radius: 0;
+    }
+
+    &--receivedMsg#{&}--bottomSticky {
+        margin-bottom: 1px;
+        border-bottom-left-radius: 0;
+    }
+
+    &--myMsg {
+        background: $primaryColor;
+        margin-right: 10px;
+        margin-left: auto;
+        color: $blackTextColor;
+
+        #{ $self }__tooltip {
+            right: calc(100% + 10px);
+
+            &::after {
+                left: 100%;
+                border-color: transparent transparent transparent $tooltipBackgroundColor;
+            }
+        }
+    }
+
+    &--myMsg#{&}--topSticky {
+        margin-top: 1px;
+        border-top-right-radius: 0;
+    }
+
+    &--myMsg#{&}--bottomSticky {
+        margin-bottom: 1px;
+        border-bottom-right-radius: 0;
+    }
+
+    &__time {
+        font-size: $timeTextSize;
+        text-align: center;
+        color: $primaryColor;
+        margin-top: 15px;
+
+        @media (max-width: 576px) {
+            font-size: $smallTimeTextSize;
+        }
+    }
+}

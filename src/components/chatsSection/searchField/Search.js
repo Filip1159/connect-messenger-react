@@ -1,13 +1,11 @@
 import React, {useContext, useState} from "react";
-import "../styles/Search.scss";
-import ChatAPI from "../helpers/ChatAPI";
+import "./Search.scss";
+import ChatAPI from "../../../store/ChatAPI";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSearch } from "@fortawesome/free-solid-svg-icons";
-import {AuthContext} from "../contexts/AuthContext";
-import {ChatContext} from "../contexts/ChatContext";
-import useChat from "../hooks/useChat";
+import {ChatContext} from "../../../store/chats/ChatContext";
 
-const Search = ({ roundedCorner }) => {
+export const Search = ({ roundedCorner }) => {
     const [ usersQueryResult, setUsersQueryResult ] = useState([]);
     const {state: {chats}} = useContext(ChatContext);
 
@@ -48,5 +46,3 @@ const Search = ({ roundedCorner }) => {
         </div>
     );
 }
-
-export default Search;

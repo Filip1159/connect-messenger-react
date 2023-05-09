@@ -1,6 +1,6 @@
 import React from "react";
-import { Route, Navigate } from "react-router-dom";
-import ChatAPI from "../helpers/ChatAPI";
+import { Navigate } from "react-router-dom";
+import ChatAPI from "../store/ChatAPI";
 
 const ProtectedRoute = ({ children }) => {
     if (!ChatAPI.isSignedIn())

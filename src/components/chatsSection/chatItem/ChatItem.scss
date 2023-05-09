@@ -1,5 +1,5 @@
-@import "./variables";
-@import "./mixins";
+@import "../../../styles/variables";
+@import "../../../styles/mixins";
 
 .chatItem {
     $self: &;
@@ -9,14 +9,13 @@
     cursor: pointer;
 
     @media (max-width: 576px) {
-
         img {
             width: 50px;
             height: 50px;
         }
     }
 
-    &__chatData {
+    &__details {
         @include setFlex(column);
         max-height: 100px;
         transition-property: visibility;
@@ -65,7 +64,7 @@
             border-left: none
         }
         
-        #{ $self }__chatData__lastMessage {
+        #{ $self }__details__lastMessage {
             display: none;
         }
     }

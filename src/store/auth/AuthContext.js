@@ -1,6 +1,6 @@
 import { createContext, useReducer } from "react";
 import { authReducer } from "./AuthReducer";
-import ChatAPI from "../helpers/ChatAPI";
+import ChatAPI from "../ChatAPI";
 
 export const AuthContext = createContext();
 

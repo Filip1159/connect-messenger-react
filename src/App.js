@@ -1,13 +1,13 @@
 import React, {useContext, useEffect} from "react";
 import {BrowserRouter as Router, Route, Routes} from "react-router-dom";
-import Header from "./components/Header";
-import LeftPanel from "./components/LeftPanel";
-import Messages from "./components/Messages";
-import LoginPage from "./components/LoginPage";
-import {AuthContext} from "./contexts/AuthContext";
-import {ChatContext} from "./contexts/ChatContext";
-import RightPanel from "./components/RightPanel";
-import ChatAPI from "./helpers/ChatAPI";
+import Header from "./components/header/Header";
+import { ChatsSection } from "./components/chatsSection/ChatsSection";
+import { MessagesSection } from "./components/messagesSection/MessagesSection";
+import LoginPage from "./components/loginPage/LoginPage";
+import {AuthContext} from "./store/auth/AuthContext";
+import {ChatContext} from "./store/chats/ChatContext";
+import RightPanel from "./components/userDetailsSection/RightPanel";
+import ChatAPI from "./store/ChatAPI";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 const App = () => {
@@ -52,8 +52,8 @@ const App = () => {
                 <Route path="/login" element={<LoginPage/>}/>
                 <Route exact path="/" element={<ProtectedRoute>
                     <div className="app__container">
-                        <LeftPanel/>
-                        <Messages/>
+                        <ChatsSection/>
+                        <MessagesSection/>
                         <RightPanel/>
                     </div>
                 </ProtectedRoute>
