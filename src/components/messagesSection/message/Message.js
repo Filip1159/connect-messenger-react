@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from "react";
 import axios from "axios";
 import "./Message.scss"
-import DateFormatter from "../../../DateFormatter";
+import { toUiFormat, toUiTooltipFormat } from "../../../dateFormatter";
 
 export const Message = React.forwardRef(
     ({
@@ -32,17 +32,37 @@ export const Message = React.forwardRef(
             isBottomSticky ? 'singleMessage--bottomSticky' : ''
         ]
 
+        const formatContent = content => {
+            const splitMarks = /(<b>|<\/b>)/
+            const splitText = content.split(splitMarks)
+            console.log(splitText)
+            let isBold = false
+            return splitText.map(fragment => {
+                if (fragment === '<b>') {
+                    isBold = true
+                    return null
+                }
+                else if (fragment === '</b>') {
+                    isBold = false
+                    return null
+                }
+                else if (isBold) {
+                    return <b style={{fontWeight: 900}}>{fragment}</b>
+                } else return <span>{fragment}</span>
+            })
+        }
+
         return (
             <>
                 {shouldDisplayDate &&
                     <div className="singleMessage__time">
-                        {DateFormatter.toUiFormat(date, shouldDisplayDay)}
+                        {toUiFormat(date, shouldDisplayDay)}
                     </div>}
                 {
                     message.type !== 'FILE' ?
                         <div ref={ref} id={`messageId${message.id}`} className={classNames.join(' ')}>
-                            {message.content}
-                            <div className="singleMessage__tooltip">{DateFormatter.toUiTooltipFormat(date)}</div>
+                            {formatContent(message.content)}
+                            <div className="singleMessage__tooltip">{toUiTooltipFormat(date)}</div>
                         </div>
                         :
                         <div ref={ref} id={`messageId${message.id}`}
@@ -51,5 +71,5 @@ export const Message = React.forwardRef(
                         </div>
                 }
             </>
-        );
-    });
+        )
+    })

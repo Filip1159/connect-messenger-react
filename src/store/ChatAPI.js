@@ -1,7 +1,7 @@
 import jwt_decode from "jwt-decode";
 import SockJS from "sockjs-client";
 import { Stomp } from "@stomp/stompjs";
-import DateFormatter from "../DateFormatter";
+import { nowToSql } from "../dateFormatter";
 import axios from "axios";
 
 const baseURL = `http://${window.location.hostname}:8080`
@@ -133,7 +133,7 @@ class ChatAPI {
                 userId: this.getAuthDetails().id
             },
             messageId,
-            time: DateFormatter.nowToSql()
+            time: nowToSql()
         });
         api.put("/status",
             {
@@ -142,7 +142,7 @@ class ChatAPI {
                     userId: this.getAuthDetails().id
                 },
                 messageId,
-                time: DateFormatter.nowToSql()
+                time: nowToSql()
             },
             {
                 headers: {
@@ -160,7 +160,7 @@ class ChatAPI {
         const formData = new FormData()
         formData.append('chatId', chatId)
         formData.append('userId', this.getAuthDetails().id)
-        formData.append('time', DateFormatter.nowToSql())
+        formData.append('time', nowToSql())
         formData.append('type', type)
         formData.append(type === 'TEXT' ? 'textContent' : 'fileContent', content)
         console.log(formData)

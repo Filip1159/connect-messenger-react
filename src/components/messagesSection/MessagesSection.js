@@ -1,7 +1,7 @@
 import React, {useCallback, useContext, useEffect, useRef, useState} from "react";
 import {AuthContext} from "../../store/auth/AuthContext";
 import {ChatContext} from "../../store/chats/ChatContext";
-import DateFormatter from "../../DateFormatter";
+import { sqlToDateObject } from "../../dateFormatter";
 import "./MessagesSection.scss";
 import NewMessageInput from "./newMessageInput/NewMessageInput";
 import useLastMessage from "./hooks/useLastMessage";
@@ -63,15 +63,15 @@ export const MessagesSection = () => {
 
     const renderedMessages = chat?.messages.map((m, i) => {
         const activeMessages = chat.messages;
-        const date = DateFormatter.sqlToDateObject(m.time);
+        const date = sqlToDateObject(m.time);
 
         const len = activeMessages.length
 
-        const previousDate = i === 0 ? new Date(1970) : DateFormatter.sqlToDateObject(activeMessages[i - 1].time)
+        const previousDate = i === 0 ? new Date(1970) : sqlToDateObject(activeMessages[i - 1].time)
         const isPreviousMessageAtLeast5MinutesAgo = date.getTime() - previousDate.getTime() >= 5*60*1000
         const isPreviousMessageAtLeastOneDayAgo = date.getTime() - previousDate.getTime() >= 24*60*60*1000
 
-        const nextDate = i === len - 1 ? new Date(2038, 1, 19) : DateFormatter.sqlToDateObject(activeMessages[i + 1].time)
+        const nextDate = i === len - 1 ? new Date(2038, 1, 19) : sqlToDateObject(activeMessages[i + 1].time)
         const isNextMessageAtLeast5MinutesAfter = nextDate.getTime() - date.getTime() >= 5*60*1000
 
         const isTopSticky = len > 1 &&
@@ -129,6 +129,12 @@ export const MessagesSection = () => {
                 >
                     <div className="messages__container__displayContent">
                         {renderedMessages}
+                        <Message
+                            key={100000}
+                            ref={null}
+                            message={{ content: 'te<b>xttt</b>tt', type: 'TEXT' }}
+                            date={sqlToDateObject("2021-07-07T22:24:59")}
+                        />
                     </div>
                     <SeenAvatarsPanel bottom={window.innerHeight - bottom}/>
                 </div>
