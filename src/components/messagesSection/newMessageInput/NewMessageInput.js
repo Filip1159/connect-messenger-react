@@ -2,6 +2,9 @@ import React, { useContext, useState } from "react";
 import { ChatContext } from "../../../store/chats/ChatContext";
 import "./NewMessageInput.scss";
 import ChatAPI from "../../../store/ChatAPI";
+import {$getRoot, $getSelection} from 'lexical'
+import Editor from "./Editor";
+import "./styles.css";
 
 const NewMessageInput = () => {
     const [ textContent, setTextContent ] = useState("");
@@ -19,6 +22,22 @@ const NewMessageInput = () => {
             setFileContent(null)
             setFileInputIcon("/images/image_icon.png")
         }
+    }
+
+    const initialConfig = {
+        namespace: 'MyEditor',
+        theme: {},
+        onError: console.error,
+    }
+
+    function onChange(editorState) {
+        editorState.read(() => {
+            // Read the contents of the EditorState here.
+            const root = $getRoot();
+            const selection = $getSelection();
+
+            console.log(root, selection);
+        })
     }
 
     return (
@@ -46,8 +65,9 @@ const NewMessageInput = () => {
                        setFileInputIcon("/images/image_icon.png")
                    }}/>
             <input type="image" className="newMessageInput__btn" src="/images/send.png" alt="Send"/>
+            <Editor />
         </form>
     );
 }
 
-export default NewMessageInput;
+export default NewMessageInput
