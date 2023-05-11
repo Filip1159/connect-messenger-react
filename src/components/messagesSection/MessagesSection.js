@@ -132,7 +132,8 @@ export const MessagesSection = () => {
                         <Message
                             key={100000}
                             ref={null}
-                            message={{ content: 'te<b>xttt</b>tt', type: 'TEXT' }}
+                            isMine={true}
+                            message={{ content: 'te_B_xt_I_trfvrfgbtvtrdfbvr_@I_t_@B_tt  rfegve _I__U_tttttwdfcdvc_@U__@I_', type: 'TEXT' }}
                             date={sqlToDateObject("2021-07-07T22:24:59")}
                         />
                     </div>

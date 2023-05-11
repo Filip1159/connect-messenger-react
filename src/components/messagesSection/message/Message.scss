@@ -10,6 +10,7 @@
     margin: 10px;
     max-width: 60%;
     font-size: $messageTextSize;
+    font-weight: 400;
     cursor: default;
 
     @media (max-width: 576px) {
@@ -117,6 +118,20 @@
 
         @media (max-width: 576px) {
             font-size: $smallTimeTextSize;
+        }
+    }
+
+    &__fragment {
+        &--bold {
+            font-weight: 900;
+        }
+
+        &--underline {
+            text-decoration: underline;
+        }
+
+        &--italic {
+            font-style: italic;
         }
     }
 }

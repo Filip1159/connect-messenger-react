@@ -33,22 +33,45 @@ export const Message = React.forwardRef(
         ]
 
         const formatContent = content => {
-            const splitMarks = /(<b>|<\/b>)/
+            const splitMarks = /(_B_|_@B_|_U_|_@U_|_I_|_@I_)/
             const splitText = content.split(splitMarks)
             console.log(splitText)
             let isBold = false
+            let isUnderline = false
+            let isItalic = false
             return splitText.map(fragment => {
-                if (fragment === '<b>') {
-                    isBold = true
-                    return null
+                switch (fragment) {
+                    case '_B_':
+                        isBold = true
+                        break
+                    case '_@B_':
+                        isBold = false
+                        break
+                    case '_U_':
+                        isUnderline = true
+                        break
+                    case '_@U_':
+                        isUnderline = false
+                        break
+                    case '_I_':
+                        isItalic = true
+                        break
+                    case '_@I_':
+                        isItalic = false
+                        break
+                    default:
+                        const fragmentClasses = []
+                        if (isBold) {
+                            fragmentClasses.push('singleMessage__fragment--bold')
+                        }
+                        if (isUnderline) {
+                            fragmentClasses.push('singleMessage__fragment--underline')
+                        }
+                        if (isItalic) {
+                            fragmentClasses.push('singleMessage__fragment--italic')
+                        }
+                        return <span className={fragmentClasses.join(' ')}>{fragment}</span>
                 }
-                else if (fragment === '</b>') {
-                    isBold = false
-                    return null
-                }
-                else if (isBold) {
-                    return <b style={{fontWeight: 900}}>{fragment}</b>
-                } else return <span>{fragment}</span>
             })
         }
 
