@@ -3,7 +3,6 @@ import type { ChangeEvent, FormEvent } from "react";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { selectAuthDetails, updateDetails } from "../../store/auth/authSlice";
 import { removeBlocked, selectBlocked, updateUser } from "../../store/chats/chatsSlice";
-import ChatAPI from "../../store/ChatAPI";
 import strings from "../../strings";
 import type { User } from "../../types";
 import { Dialog } from "../common/Dialog";
@@ -11,6 +10,7 @@ import Avatar from "../common/Avatar";
 import { errorMessage } from "../common/errors";
 import { validatePassword } from "../registerPage/registerValidation";
 import "./ProfileDialog.scss";
+import * as usersApi from "../../api/rest/users";
 
 const MAX_AVATAR_SIZE = 2 * 1024 * 1024;  // the backend refuses bigger ones
 const AVATAR_TYPES = [ "image/jpeg", "image/png", "image/gif" ];
@@ -50,7 +50,7 @@ const PhotoSection = ({ me }: { me: User }) => {
         if (!file) return;
         if (!AVATAR_TYPES.includes(file.type)) return setError(strings.messageInput.notAnImage);
         if (file.size > MAX_AVATAR_SIZE) return setError(strings.profile.photoTooLarge);
-        change(() => ChatAPI.uploadAvatar(file));
+        change(() => usersApi.uploadAvatar(file));
     };
 
     const change = (request: () => Promise<User>) => {
@@ -76,7 +76,7 @@ const PhotoSection = ({ me }: { me: User }) => {
                             {strings.profile.changePhoto}
                         </button>
                         {me.avatarKey &&
-                            <button type="button" className="dialog__button" disabled={busy} onClick={() => change(() => ChatAPI.removeAvatar())}>
+                            <button type="button" className="dialog__button" disabled={busy} onClick={() => change(() => usersApi.removeAvatar())}>
                                 {strings.profile.removePhoto}
                             </button>}
                     </div>
@@ -107,7 +107,7 @@ const NameSection = ({ me }: { me: User }) => {
         if (busy || !valid || unchanged) return;
         setBusy(true);
         setMessage(null);
-        ChatAPI.updateProfile(name.trim(), surname.trim())
+        usersApi.updateProfile(name.trim(), surname.trim())
             .then(user => {
                 apply(user);
                 setMessage({ ok: true, text: strings.profile.saved });
@@ -158,7 +158,7 @@ const PasswordSection = () => {
         if (busy || !ready) return;
         setBusy(true);
         setMessage(null);
-        ChatAPI.changePassword(current, next)
+        usersApi.changePassword(current, next)
             .then(() => {
                 setMessage({ ok: true, text: strings.profile.passwordChanged });
                 setCurrent("");
@@ -206,7 +206,7 @@ const BlockedSection = () => {
 
     const unblock = (user: User) => {
         setError("");
-        ChatAPI.unblockUser(user.id)
+        usersApi.unblockUser(user.id)
             .then(() => dispatch(removeBlocked(user.id)))
             .catch(e => {
                 console.error("Failed to unblock:", e);

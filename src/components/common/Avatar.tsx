@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import type { ImgHTMLAttributes } from "react";
-import ChatAPI from "../../store/ChatAPI";
 import strings from "../../strings";
 import type { User } from "../../types";
+import * as usersApi from "../../api/rest/users";
 
 const FALLBACK_AVATAR = "data:image/svg+xml," + encodeURIComponent(
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">' +
@@ -18,7 +18,7 @@ const loadUploaded = (user: AvatarUser): Promise<string> => {
     const key = `${user.id}:${user.avatarKey}`;
     let url = uploaded.get(key);
     if (!url) {
-        url = ChatAPI.loadAvatar(user.id).then(blob => URL.createObjectURL(blob));
+        url = usersApi.loadAvatar(user.id).then(blob => URL.createObjectURL(blob));
         url.catch(() => uploaded.delete(key));  // a failure may be temporary
         uploaded.set(key, url);
     }

@@ -8,9 +8,11 @@ import { selectAuthDetails, updateDetails } from "../auth/authSlice";
 import {
     addChat, addMessage, removeChat, setBlocked, setChats, setPresence, setTyping, syncChats, updatePresence, updateStatus, upsertChat, updateUser
 } from "./chatsSlice";
-import ChatAPI, { PAGE_SIZE } from "../ChatAPI";
+import ChatAPI from "../ChatAPI";
 import { handleIncoming } from "./incoming";
 import { selectReloadCount, setChatsStatus, setConnection } from "../ui/uiSlice";
+import * as chatsApi from "../../api/rest/chats";
+import * as usersApi from "../../api/rest/users";
 
 /* how long somebody is shown as writing after their last typing event */
 const TYPING_TIMEOUT = 4000;
@@ -77,15 +79,15 @@ const useChatSync = () => {
             if (parsed) dispatch(updatePresence(parsed));
         };
 
-        const loadPresence = () => ChatAPI.loadPresence()
+        const loadPresence = () => chatsApi.loadPresence()
             .then(presence => dispatch(setPresence(presence)))
             .catch(e => console.error("Failed to load presence:", e));
 
         /* the newest page of a chat, so the list can show previews and sort by activity */
         const withLatestMessages = async (chat: Chat): Promise<Chat> => {
             try {
-                const messages = await ChatAPI.loadMessages(chat.id);
-                return { ...chat, messages, hasMore: messages.length >= PAGE_SIZE };
+                const messages = await chatsApi.loadMessages(chat.id);
+                return { ...chat, messages, hasMore: messages.length >= chatsApi.PAGE_SIZE };
             } catch (e) {
                 console.error(`Failed to load messages of chat ${chat.id}:`, e);
                 return { ...chat, messagesFailed: true };
@@ -124,16 +126,16 @@ const useChatSync = () => {
         const catchUp = async (chat: Chat) => {
             let after = chat.messages[chat.messages.length - 1]?.id ?? 0;
             for (let page = 0; page < MAX_CATCH_UP_PAGES; page++) {
-                const messages = await ChatAPI.loadMessagesAfter(chat.id, after);
+                const messages = await chatsApi.loadMessagesAfter(chat.id, after);
                 messages.forEach(m => dispatch(addMessage(m)));
-                if (messages.length < PAGE_SIZE) return;
+                if (messages.length < chatsApi.PAGE_SIZE) return;
                 after = messages[messages.length - 1].id;
             }
         };
 
         const onReconnect = async () => {
             try {
-                const fresh = await ChatAPI.loadAllChats();
+                const fresh = await chatsApi.loadAllChats();
                 const known = new Map(store.getState().chats.chats.map(c => [ c.id, c ]));
                 const unknown = fresh.filter(c => !known.has(c.id));
                 // groups I was removed from while the connection was down
@@ -153,13 +155,13 @@ const useChatSync = () => {
         };
 
         /* the token carries the name from sign-in time; the avatar isn't in it at all */
-        ChatAPI.loadProfile()
+        usersApi.loadProfile()
             .then(profile => {
                 dispatch(updateDetails({ name: profile.name, surname: profile.surname, avatarKey: profile.avatarKey ?? null }));
                 dispatch(updateUser(profile));
             })
             .catch(e => console.error("Failed to load the profile:", e));
-        ChatAPI.loadBlocked()
+        usersApi.loadBlocked()
             .then(users => dispatch(setBlocked(users)))
             .catch(e => console.error("Failed to load blocked users:", e));
 
@@ -167,7 +169,7 @@ const useChatSync = () => {
 
         let cancelled = false;
         dispatch(setConnection("connecting"));
-        ChatAPI.loadAllChats()
+        chatsApi.loadAllChats()
             .then(chats => Promise.all(chats.map(withLatestMessages)))
             .then(chats => {
                 if (cancelled) return;

@@ -11,6 +11,7 @@ import { selectAuthDetails } from "../../../store/auth/authSlice";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faFaceSmile } from "@fortawesome/free-solid-svg-icons";
 import { EmojiPicker } from "../../common/EmojiPicker";
+import * as usersApi from "../../../api/rest/users";
 
 /* at most one typing notification per this many ms */
 const TYPING_THROTTLE = 2500;
@@ -148,7 +149,7 @@ const NewMessageInput = () => {
             <div className="newMessageInput newMessageInput--blocked" role="status">
                 <span>{strings.chatOptions.blockedInput}</span>
                 <button type="button" onClick={() => {
-                    ChatAPI.unblockUser(blockedPerson.id)
+                    usersApi.unblockUser(blockedPerson.id)
                         .then(() => dispatch(removeBlocked(blockedPerson.id)))
                         .catch(e => console.error("Failed to unblock:", e));
                 }}>{strings.chatOptions.unblock}</button>

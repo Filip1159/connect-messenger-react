@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import ChatAPI, { PAGE_SIZE } from "../../../store/ChatAPI";
 import DateFormatter from "../../../DateFormatter";
 import strings from "../../../strings";
 import type { Message } from "../../../types";
 import "./MessageSearch.scss";
+import * as chatsApi from "../../../api/rest/chats";
 
 const DEBOUNCE = 300;
 
@@ -46,11 +46,11 @@ export const MessageSearch = ({ chatId, onJump, onClose }: MessageSearchProps) =
         controller.current?.abort();
         const abort = new AbortController();
         controller.current = abort;
-        ChatAPI.searchMessages(chatId, text, before, abort.signal)
+        chatsApi.searchMessages(chatId, text, before, abort.signal)
             .then(found => setResults(previous => ({
                 query: text,
                 messages: before !== undefined && previous?.query === text ? [ ...previous.messages, ...found ] : found,
-                hasMore: found.length >= PAGE_SIZE,
+                hasMore: found.length >= chatsApi.PAGE_SIZE,
                 failed: false
             })))
             .catch(e => {

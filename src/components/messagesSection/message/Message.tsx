@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import type { KeyboardEvent } from "react";
 import type { Message as MessageModel } from "../../../types";
 import type DateFormatter from "../../../DateFormatter";
-import ChatAPI from "../../../store/ChatAPI";
+import * as messagesApi from "../../../api/rest/messages";
 import { useAppDispatch, useAppSelector } from "../../../store/hooks";
 import { addMessage, selectActiveChat, setReplyTo } from "../../../store/chats/chatsSlice";
 import { selectAuthDetails } from "../../../store/auth/authSlice";
@@ -35,7 +35,7 @@ const MessageImage = ({ fileName }: { fileName: string }) => {
     useEffect(() => {
         const controller = new AbortController();
         let objectUrl: string | null = null;
-        ChatAPI.loadFile(fileName, controller.signal)
+        messagesApi.loadFile(fileName, controller.signal)
             .then(blob => {
                 objectUrl = URL.createObjectURL(blob);
                 setImageData(objectUrl);
@@ -81,7 +81,7 @@ const ReplyQuote = ({ replyToId, onJump }: { replyToId: number; onJump?: (id: nu
     useEffect(() => {
         if (loaded) return;
         const controller = new AbortController();
-        ChatAPI.loadMessage(replyToId, controller.signal)
+        messagesApi.loadMessage(replyToId, controller.signal)
             .then(setFetched)
             .catch(() => { if (!controller.signal.aborted) setMissing(true); });
         return () => controller.abort();
@@ -109,7 +109,7 @@ const ReactionChips = ({ message }: { message: MessageModel }) => {
 
     const takeBack = () => {
         setBusy(true);
-        ChatAPI.removeReaction(message.id)
+        messagesApi.removeReaction(message.id)
             .then(updated => dispatch(addMessage(updated)))
             .catch(e => console.error("Failed to remove the reaction:", e))
             .finally(() => setBusy(false));
@@ -136,7 +136,7 @@ const ReactAndReply = ({ message }: { message: MessageModel }) => {
 
     const react = (emoji: string) => {
         setPicking(false);
-        ChatAPI.react(message.id, emoji)
+        messagesApi.react(message.id, emoji)
             .then(updated => dispatch(addMessage(updated)))
             .catch(e => console.error("Failed to react:", e));
     };
@@ -191,9 +191,9 @@ const useOwnMessageActions = (message: MessageModel) => {
         const text = draft.trim() === "" ? "" : draft;
         if (!text || busy) return;
         if (text === message.content) return cancelEdit();
-        run(ChatAPI.editMessage(message.id, text), strings.message.editFailed, () => setEditing(false));
+        run(messagesApi.editMessage(message.id, text), strings.message.editFailed, () => setEditing(false));
     };
-    const remove = () => run(ChatAPI.deleteMessage(message.id), strings.message.deleteFailed, () => setConfirmingDelete(false));
+    const remove = () => run(messagesApi.deleteMessage(message.id), strings.message.deleteFailed, () => setConfirmingDelete(false));
 
     const onEditorKey = (e: KeyboardEvent<HTMLTextAreaElement>) => {
         if (e.key === "Escape") cancelEdit();

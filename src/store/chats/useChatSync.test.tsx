@@ -5,31 +5,34 @@ import type { ReactNode } from "react";
 import { makeStore } from "../index";
 import useChatSync from "./useChatSync";
 import ChatAPI from "../ChatAPI";
+import * as chatsApi from "../../api/rest/chats";
+import * as usersApi from "../../api/rest/users";
 import type { ChatCallbacks, SocketHandlers } from "../ChatAPI";
 import type { IMessage } from "@stomp/stompjs";
 import type { Message } from "../../types";
 import { makeChat } from "../../test/fixtures";
 
-vi.mock("../ChatAPI", () => ({
+vi.mock("../../api/rest/chats", () => ({
     PAGE_SIZE: 2,
+    loadAllChats: vi.fn(),
+    loadMessages: vi.fn(),
+    loadMessagesAfter: vi.fn(),
+    loadPresence: vi.fn()
+}));
+vi.mock("../../api/rest/users", () => ({ loadProfile: vi.fn(), loadBlocked: vi.fn() }));
+vi.mock("../ChatAPI", () => ({
     default: {
         onSignOut: vi.fn(),
         getAuthDetails: vi.fn(() => { throw new Error("not signed in"); }),
-        loadAllChats: vi.fn(),
-        loadMessages: vi.fn(),
-        loadMessagesAfter: vi.fn(),
-        loadPresence: vi.fn(),
         initWebsocket: vi.fn(),
         closeWebsocket: vi.fn(),
         subscribeToChat: vi.fn(),
         watchUser: vi.fn(),
         unsubscribeChat: vi.fn(),
-        loadProfile: vi.fn(),
-        loadBlocked: vi.fn(),
     }
 }));
 
-const api = vi.mocked(ChatAPI);
+const api = { ...vi.mocked(ChatAPI), ...vi.mocked(chatsApi), ...vi.mocked(usersApi) };
 const me = { id: 1, username: "user1", name: "Name1", surname: "Surname1", exp: 0 };
 const frame = (body: unknown) => ({ body: JSON.stringify(body) }) as IMessage;
 const msg = (id: number, chatId: number, userId: number): Message =>

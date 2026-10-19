@@ -8,6 +8,7 @@ import ChatAPI from "../../store/ChatAPI";
 import strings from "../../strings";
 import { validateName, validatePassword, validateUsername } from "./registerValidation";
 import "../loginPage/LoginPage.scss";
+import * as usersApi from "../../api/rest/users";
 
 const RegisterPage = () => {
     const authDetails = useAppSelector(selectAuthDetails);
@@ -40,7 +41,7 @@ const RegisterPage = () => {
         setSubmitting(true);
         setError(null);
         try {
-            await ChatAPI.register({ username: username.trim(), name: name.trim(), surname: surname.trim(), password });
+            await usersApi.register({ username: username.trim(), name: name.trim(), surname: surname.trim(), password });
             const result = await ChatAPI.signIn(username.trim(), password);
             if (!result.success) throw new Error("The new account could not sign in");
             dispatch(setDetails(ChatAPI.getAuthDetails()));

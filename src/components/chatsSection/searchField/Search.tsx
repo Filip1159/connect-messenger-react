@@ -1,7 +1,6 @@
 import { useState } from "react";
 import type { User } from "../../../types";
 import "./Search.scss";
-import ChatAPI from "../../../store/ChatAPI";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSearch, faUserGroup } from "@fortawesome/free-solid-svg-icons";
 import { useAppDispatch } from "../../../store/hooks";
@@ -11,6 +10,7 @@ import {activateOnKey} from "../../common/keyboard";
 import Avatar from "../../common/Avatar";
 import { useUserSearch } from "../../common/useUserSearch";
 import { NewGroupDialog } from "../../newGroup/NewGroupDialog";
+import * as chatsApi from "../../../api/rest/chats";
 
 export const Search = () => {
     const dispatch = useAppDispatch();
@@ -21,7 +21,7 @@ export const Search = () => {
     /* an existing chat with the person is opened instead of a second one */
     const openChat = (user: User) => {
         setText("");
-        ChatAPI.createChat([ user.id ])
+        chatsApi.createChat([ user.id ])
             .then(chat => {
                 dispatch(upsertChat(chat));
                 dispatch(setActive(chat.id));

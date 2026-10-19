@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import ChatAPI from "../../store/ChatAPI";
 import type { User } from "../../types";
+import * as usersApi from "../../api/rest/users";
 
 const DEBOUNCE_MS = 300;
 
@@ -19,7 +19,7 @@ export const useUserSearch = (text: string) => {
         if (!query) return;
         const controller = new AbortController();
         const timer = setTimeout(() => {
-            ChatAPI.searchUsersByQuery(query, controller.signal)
+            usersApi.searchUsersByQuery(query, controller.signal)
                 .then(users => setFound({ query, users, failed: false }))
                 .catch(e => {
                     if (controller.signal.aborted) return;

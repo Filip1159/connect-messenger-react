@@ -12,6 +12,8 @@ import Avatar from "../common/Avatar";
 import { UserPicker } from "../common/UserPicker";
 import { errorMessage } from "../common/errors";
 import "./ChatDetailsDialog.scss";
+import * as chatsApi from "../../api/rest/chats";
+import * as usersApi from "../../api/rest/users";
 
 const MAX_NAME_LENGTH = 60;
 
@@ -56,11 +58,11 @@ export const ChatDetailsDialog = ({ chatId, onClose }: { chatId: number; onClose
             <div className="dialog__section">
                 <div className="dialog__row">
                     <button type="button" className="dialog__button" aria-pressed={!!chat.muted} disabled={busy}
-                            onClick={() => changeChat(() => ChatAPI.updateChatSettings(chat.id, { muted: !chat.muted }))}>
+                            onClick={() => changeChat(() => chatsApi.updateChatSettings(chat.id, { muted: !chat.muted }))}>
                         {chat.muted ? strings.chatOptions.unmute : strings.chatOptions.mute}
                     </button>
                     <button type="button" className="dialog__button" aria-pressed={!!chat.archived} disabled={busy}
-                            onClick={() => changeChat(() => ChatAPI.updateChatSettings(chat.id, { archived: !chat.archived }))}>
+                            onClick={() => changeChat(() => chatsApi.updateChatSettings(chat.id, { archived: !chat.archived }))}>
                         {chat.archived ? strings.chatOptions.unarchive : strings.chatOptions.archive}
                     </button>
                 </div>
@@ -68,8 +70,8 @@ export const ChatDetailsDialog = ({ chatId, onClose }: { chatId: number; onClose
 
             {!group && other &&
                 <BlockSection user={other} isBlocked={blocked.some(u => u.id === other.id)} busy={busy}
-                              onBlock={() => run(async () => { await ChatAPI.blockUser(other.id); dispatch(addBlocked(other)); })}
-                              onUnblock={() => run(async () => { await ChatAPI.unblockUser(other.id); dispatch(removeBlocked(other.id)); })} />}
+                              onBlock={() => run(async () => { await usersApi.blockUser(other.id); dispatch(addBlocked(other)); })}
+                              onUnblock={() => run(async () => { await usersApi.unblockUser(other.id); dispatch(removeBlocked(other.id)); })} />}
 
             {group &&
                 <GroupSection chat={chat} myId={myId} admin={admin} busy={busy} run={run} changeChat={changeChat}
@@ -126,15 +128,15 @@ const GroupSection = ({ chat, myId, admin, busy, run, changeChat, onLeft }: {
 
     const toggle = (user: User) =>
         setAdding(current => current.some(u => u.id === user.id) ? current.filter(u => u.id !== user.id) : [ ...current, user ]);
-    const rename = () => { if (name.trim()) void changeChat(() => ChatAPI.renameChat(chat.id, name.trim())); };
+    const rename = () => { if (name.trim()) void changeChat(() => chatsApi.renameChat(chat.id, name.trim())); };
     const add = async () => {
-        if (await changeChat(() => ChatAPI.addMembers(chat.id, adding.map(u => u.id)))) setAdding([]);
+        if (await changeChat(() => chatsApi.addMembers(chat.id, adding.map(u => u.id)))) setAdding([]);
     };
     const remove = (user: User) => run(async () => {
-        await ChatAPI.removeMember(chat.id, user.id);
-        dispatch(upsertChat(await ChatAPI.loadChat(chat.id)));
+        await chatsApi.removeMember(chat.id, user.id);
+        dispatch(upsertChat(await chatsApi.loadChat(chat.id)));
     });
-    const leave = async () => { if (await run(() => ChatAPI.removeMember(chat.id, myId as number))) onLeft(); };
+    const leave = async () => { if (await run(() => chatsApi.removeMember(chat.id, myId as number))) onLeft(); };
 
     return (
         <>
@@ -168,7 +170,7 @@ const GroupSection = ({ chat, myId, admin, busy, run, changeChat, onLeft }: {
                                     <span className="chatDetails__memberActions">
                                         <button type="button" className="dialog__button" disabled={busy}
                                                 aria-label={`${isAdminUser ? strings.group.removeAdmin : strings.group.makeAdmin}: ${fullName(u)}`}
-                                                onClick={() => changeChat(() => ChatAPI.setAdmin(chat.id, u.id, !isAdminUser))}>
+                                                onClick={() => changeChat(() => chatsApi.setAdmin(chat.id, u.id, !isAdminUser))}>
                                             {isAdminUser ? strings.group.removeAdmin : strings.group.makeAdmin}
                                         </button>
                                         <button type="button" className="dialog__button dialog__button--danger" disabled={busy}

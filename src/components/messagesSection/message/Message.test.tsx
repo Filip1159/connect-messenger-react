@@ -3,25 +3,21 @@ import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Provider } from "react-redux";
 import { makeStore } from "../../../store";
-import ChatAPI from "../../../store/ChatAPI";
+import * as messagesApi from "../../../api/rest/messages";
 import DateFormatter from "../../../DateFormatter";
 import { Message } from "./Message";
 import type { Message as MessageModel } from "../../../types";
 
-vi.mock("../../../store/ChatAPI", () => ({
-    default: {
-        loadFile: vi.fn(),
-        editMessage: vi.fn(),
-        react: vi.fn(),
-        removeReaction: vi.fn(),
-        loadMessage: vi.fn(),
-        deleteMessage: vi.fn(),
-        onSignOut: vi.fn(),
-        getAuthDetails: vi.fn(() => ({ id: 1 }))
-    }
+vi.mock("../../../api/rest/messages", () => ({
+    loadFile: vi.fn(),
+    editMessage: vi.fn(),
+    react: vi.fn(),
+    removeReaction: vi.fn(),
+    loadMessage: vi.fn(),
+    deleteMessage: vi.fn()
 }));
 
-const api = vi.mocked(ChatAPI);
+const api = vi.mocked(messagesApi);
 
 const text = (over: Partial<MessageModel> = {}): MessageModel =>
     ({ id: 7, chatId: 1, userId: 1, type: "TEXT", content: "hello", time: "2021-05-04T12:00:00", ...over });

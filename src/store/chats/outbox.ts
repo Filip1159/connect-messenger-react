@@ -1,7 +1,7 @@
 import type { AppDispatch } from "../index";
 import type { MessageType, OutboxItem } from "../../types";
-import ChatAPI from "../ChatAPI";
 import { addMessage, outboxAdd, outboxRemove, outboxStatus } from "./chatsSlice";
+import * as messagesApi from "../../api/rest/messages";
 
 /* files can't live in the (serializable) store */
 const files = new Map<string, File>();
@@ -15,7 +15,7 @@ const send = (dispatch: AppDispatch, item: OutboxItem): Promise<void> => {
         dispatch(outboxRemove(item.localId));
         return Promise.resolve();
     }
-    return ChatAPI.postMessage(item.chatId, item.type, content, item.replyToId)
+    return messagesApi.postMessage(item.chatId, item.type, content, item.replyToId)
         .then(res => {
             files.delete(item.localId);
             dispatch(outboxRemove(item.localId));

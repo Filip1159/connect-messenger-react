@@ -1,11 +1,11 @@
 import SockJS from "sockjs-client";
 import { Client } from "@stomp/stompjs";
 import type { IMessage, StompSubscription } from "@stomp/stompjs";
-import { baseURL, http } from "../api/http";
+import { baseURL } from "../api/http";
 import { getToken } from "../api/token";
 import { currentUserId, getAuthDetails, isSignedIn, onSignOut, signIn, signOut } from "../api/session";
 import type { SignInResult } from "../api/session";
-import type { Chat, Message, MessageType, Presence, User } from "../types";
+import type { Chat } from "../types";
 
 type MessageCallback = (message: IMessage) => void;
 
@@ -28,8 +28,6 @@ export interface SocketHandlers {
     /* the websocket is up, or it dropped after having been up */
     onConnection: (state: "connected" | "reconnecting") => void;
 }
-
-export const PAGE_SIZE = 50;
 
 export type { SignInResult };
 
@@ -150,210 +148,6 @@ class ChatAPI {
         this.subscribe(chatId, callbacks); // if not connected yet, onConnect subscribes it
     }
 
-    /* chats come without messages, the history is loaded with loadMessages() */
-    static async loadAllChats(): Promise<Chat[]> {
-        const res = await http.get(`/chats/${getAuthDetails().id}`, { params: { includeMessages: false } });
-        return res.data;
-    }
-
-    /* messages newer than `after`, oldest first - used to catch up after a lost connection */
-    static async loadMessagesAfter(chatId: number, after: number, signal?: AbortSignal): Promise<Message[]> {
-        getAuthDetails();
-        const res = await http.get(`/chats/chat/${chatId}/messages`, { params: { after, size: PAGE_SIZE }, signal });
-        return res.data;
-    }
-
-    static async loadPresence(): Promise<Presence[]> {
-        getAuthDetails();
-        const res = await http.get("/presence");
-        return res.data;
-    }
-
-    /* a page of the history, oldest first; `before` is the id of the oldest message already known */
-    static async loadMessages(chatId: number, before?: number, signal?: AbortSignal): Promise<Message[]> {
-        getAuthDetails();
-        const res = await http.get(`/chats/chat/${chatId}/messages`, { params: { before, size: PAGE_SIZE }, signal });
-        return res.data;
-    }
-
-    /* puts new status to api, when I read unseen message.
-     * api sends status update through websocket, chatReducer performs context update */
-    static updateStatus(chatId: number, messageId: number) {
-        getAuthDetails();
-        // the user and the time are taken from the session / the server clock
-        return http.put("/status", { id: { chatId }, messageId });
-    }
-
-    /* resolves with the stored message */
-    static postMessage(chatId: number, type: MessageType, content: string | File, replyToId?: number) {
-        getAuthDetails();
-        const formData = new FormData()
-        formData.append('chatId', String(chatId))
-        formData.append('type', type)
-        if (replyToId !== undefined) formData.append('replyToId', String(replyToId))
-        formData.append(type === 'TEXT' ? 'textContent' : 'fileContent', content)
-        return http.post<Message>("/message", formData);
-    }
-
-    static async loadMessage(id: number, signal?: AbortSignal): Promise<Message> {
-        getAuthDetails();
-        const res = await http.get<Message>(`/message/${id}`, { signal });
-        return res.data;
-    }
-
-    /* my reaction to a message (replaces the previous one); resolves with the updated message */
-    static async react(id: number, emoji: string): Promise<Message> {
-        getAuthDetails();
-        const res = await http.put<Message>(`/message/${id}/reaction`, { emoji });
-        return res.data;
-    }
-
-    static async removeReaction(id: number): Promise<Message> {
-        getAuthDetails();
-        const res = await http.delete<Message>(`/message/${id}/reaction`);
-        return res.data;
-    }
-
-    /* the author changes the text; resolves with the updated message */
-    static async editMessage(id: number, textContent: string): Promise<Message> {
-        getAuthDetails();
-        const res = await http.patch<Message>(`/message/${id}`, { textContent });
-        return res.data;
-    }
-
-    /* soft delete by the author; resolves with the (content-less) message */
-    static async deleteMessage(id: number): Promise<Message> {
-        getAuthDetails();
-        const res = await http.delete<Message>(`/message/${id}`);
-        return res.data;
-    }
-
-    /* text messages containing `query`, newest first; `before` is the id of the oldest match already shown */
-    static async searchMessages(chatId: number, query: string, before?: number, signal?: AbortSignal): Promise<Message[]> {
-        getAuthDetails();
-        const res = await http.get(`/chats/chat/${chatId}/messages`, { params: { query, before, size: PAGE_SIZE }, signal });
-        return res.data;
-    }
-
-    static async searchUsersByQuery(query: string, signal?: AbortSignal): Promise<User[]> {
-        getAuthDetails();
-        const res = await http.get(`/user/${encodeURIComponent(query)}`, { signal });
-        return res.data;
-    }
-
-    /* a 1:1 chat (an existing one is returned if there is one) or, with a name or more people, a group */
-    static async createChat(recipientIds: number[], name?: string): Promise<Chat> {
-        const res = await http.post('/chats', {
-            userIds: [getAuthDetails().id, ...recipientIds],
-            ...(name ? { name } : {})
-        });
-        return res.data;
-    }
-
-    static async loadChat(chatId: number): Promise<Chat> {
-        getAuthDetails();
-        const res = await http.get(`/chats/chat/${chatId}`);
-        return res.data;
-    }
-
-    /* archive / mute: my own settings of the chat */
-    static async updateChatSettings(chatId: number, settings: { archived?: boolean; muted?: boolean }): Promise<Chat> {
-        getAuthDetails();
-        const res = await http.patch(`/chats/chat/${chatId}/settings`, settings);
-        return res.data;
-    }
-
-    static async renameChat(chatId: number, name: string): Promise<Chat> {
-        getAuthDetails();
-        const res = await http.patch(`/chats/chat/${chatId}`, { name });
-        return res.data;
-    }
-
-    static async addMembers(chatId: number, userIds: number[]): Promise<Chat> {
-        getAuthDetails();
-        const res = await http.post(`/chats/chat/${chatId}/members`, { userIds });
-        return res.data;
-    }
-
-    /* an admin removes a member; removing myself leaves the group */
-    static async removeMember(chatId: number, userId: number): Promise<void> {
-        getAuthDetails();
-        await http.delete(`/chats/chat/${chatId}/members/${userId}`);
-    }
-
-    static async setAdmin(chatId: number, userId: number, admin: boolean): Promise<Chat> {
-        getAuthDetails();
-        const res = admin
-            ? await http.put(`/chats/chat/${chatId}/admins/${userId}`)
-            : await http.delete(`/chats/chat/${chatId}/admins/${userId}`);
-        return res.data;
-    }
-
-    /* creates the account; the caller signs in afterwards */
-    static async register(account: { username: string; name: string; surname: string; password: string }): Promise<User> {
-        const res = await http.post("/users", account);
-        return res.data;
-    }
-
-    static async loadProfile(): Promise<User> {
-        getAuthDetails();
-        const res = await http.get("/users/me");
-        return res.data;
-    }
-
-    static async updateProfile(name: string, surname: string): Promise<User> {
-        getAuthDetails();
-        const res = await http.patch("/users/me", { name, surname });
-        return res.data;
-    }
-
-    static async changePassword(currentPassword: string, newPassword: string): Promise<void> {
-        getAuthDetails();
-        await http.put("/users/me/password", { currentPassword, newPassword });
-    }
-
-    static async uploadAvatar(file: File): Promise<User> {
-        getAuthDetails();
-        const formData = new FormData();
-        formData.append("file", file);
-        const res = await http.put("/users/me/avatar", formData);
-        return res.data;
-    }
-
-    static async removeAvatar(): Promise<User> {
-        getAuthDetails();
-        const res = await http.delete("/users/me/avatar");
-        return res.data;
-    }
-
-    static async loadAvatar(userId: number, signal?: AbortSignal): Promise<Blob> {
-        getAuthDetails();
-        const res = await http.get(`/users/${userId}/avatar`, { responseType: "blob", signal });
-        return res.data;
-    }
-
-    static async loadBlocked(): Promise<User[]> {
-        getAuthDetails();
-        const res = await http.get("/users/blocked");
-        return res.data;
-    }
-
-    static async blockUser(userId: number): Promise<void> {
-        getAuthDetails();
-        await http.put(`/users/${userId}/block`);
-    }
-
-    static async unblockUser(userId: number): Promise<void> {
-        getAuthDetails();
-        await http.delete(`/users/${userId}/block`);
-    }
-
-    /* the image bytes; the caller turns them into an object URL */
-    static async loadFile(fileName: string, signal?: AbortSignal): Promise<Blob> {
-        getAuthDetails();
-        const res = await http.get(`/message/file/${encodeURIComponent(fileName)}/raw`, { responseType: "blob", signal });
-        return res.data;
-    }
 }
 
 // signing out (also by an expired token or a 401) closes the websocket

@@ -2,12 +2,12 @@ import { useId, useState } from "react";
 import type { FormEvent } from "react";
 import { useAppDispatch } from "../../store/hooks";
 import { setActive, upsertChat } from "../../store/chats/chatsSlice";
-import ChatAPI from "../../store/ChatAPI";
 import strings from "../../strings";
 import type { User } from "../../types";
 import { Dialog } from "../common/Dialog";
 import { UserPicker } from "../common/UserPicker";
 import { errorMessage } from "../common/errors";
+import * as chatsApi from "../../api/rest/chats";
 
 const MAX_NAME_LENGTH = 60;
 
@@ -30,7 +30,7 @@ export const NewGroupDialog = ({ onClose }: { onClose: () => void }) => {
         if (busy || !canCreateGroup(name, people.length)) return;
         setBusy(true);
         setError("");
-        ChatAPI.createChat(people.map(u => u.id), name.trim() || undefined)
+        chatsApi.createChat(people.map(u => u.id), name.trim() || undefined)
             .then(chat => {
                 dispatch(upsertChat(chat));
                 dispatch(setActive(chat.id));

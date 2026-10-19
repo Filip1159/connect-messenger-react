@@ -12,13 +12,13 @@ import usePageVisible from "./hooks/usePageVisible";
 import SeenAvatarsPanel, { type Bounds } from "./seenAvatarPanel/SeenAvatarsPanel";
 import fall from "./seenAvatarPanel/FallingAvatar";
 import strings from "../../strings";
-import ChatAPI, { PAGE_SIZE } from "../../store/ChatAPI";
 import { Message } from "./message/Message";
 import { ConversationStatus } from "./conversationStatus/ConversationStatus";
 import { PendingMessage } from "./pendingMessage/PendingMessage";
 import { MessageSearch } from "./messageSearch/MessageSearch";
 import { isGroup } from "../../store/chats/chatUtils";
 import { selectChatsStatus, selectFocusRequest } from "../../store/ui/uiSlice";
+import * as chatsApi from "../../api/rest/chats";
 
 /* how many pages of history are loaded at most to reach a message found by the search */
 const MAX_JUMP_PAGES = 40;
@@ -120,8 +120,8 @@ export const MessagesSection = () => {
             if (!current || current.messages.some(m => m.id === messageId)) break;
             if (current.hasMore === false) break;
             try {
-                const messages = await ChatAPI.loadMessages(chatId, current.messages[0]?.id);
-                dispatch(prependMessages({ chatId, messages, hasMore: messages.length >= PAGE_SIZE }));
+                const messages = await chatsApi.loadMessages(chatId, current.messages[0]?.id);
+                dispatch(prependMessages({ chatId, messages, hasMore: messages.length >= chatsApi.PAGE_SIZE }));
             } catch (e) {
                 console.error("Failed to load older messages:", e);
                 break;
@@ -142,11 +142,11 @@ export const MessagesSection = () => {
         if (chatId === undefined || firstId === undefined || !hasMore || loadingOlder.current) return;
         loadingOlder.current = true;
         setOlderState({ chatId, state: "loading" });
-        ChatAPI.loadMessages(chatId, firstId)
+        chatsApi.loadMessages(chatId, firstId)
             .then(messages => {
                 const el = contentDisplayerRef.current;
                 if (el && messages.length > 0) keepScroll.current = { chatId, height: el.scrollHeight, top: el.scrollTop };
-                dispatch(prependMessages({ chatId, messages, hasMore: messages.length >= PAGE_SIZE }));
+                dispatch(prependMessages({ chatId, messages, hasMore: messages.length >= chatsApi.PAGE_SIZE }));
                 setOlderState(null);
             })
             .catch(e => {
@@ -160,8 +160,8 @@ export const MessagesSection = () => {
     const retryLatest = () => {
         if (chatId === undefined) return;
         setOlderState(null);
-        ChatAPI.loadMessages(chatId)
-            .then(messages => dispatch(prependMessages({ chatId, messages, hasMore: messages.length >= PAGE_SIZE })))
+        chatsApi.loadMessages(chatId)
+            .then(messages => dispatch(prependMessages({ chatId, messages, hasMore: messages.length >= chatsApi.PAGE_SIZE })))
             .catch(e => {
                 console.error("Failed to load messages:", e);
                 setOlderState({ chatId, state: "failed" });
@@ -232,7 +232,7 @@ export const MessagesSection = () => {
         if (sentStatusKey.current === key) return;
         sentStatusKey.current = key;
 
-        ChatAPI.updateStatus(chatId, lastMessage).then(() => dispatch(markRead(chatId))).catch(e => {
+        chatsApi.updateStatus(chatId, lastMessage).then(() => dispatch(markRead(chatId))).catch(e => {
             if (sentStatusKey.current === key) sentStatusKey.current = null;  // allow a retry
             console.error("Failed to update status:", e);
         });
