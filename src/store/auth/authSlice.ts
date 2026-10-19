@@ -1,0 +1,42 @@
+import { createSlice } from "@reduxjs/toolkit";
+import type { PayloadAction } from "@reduxjs/toolkit";
+import type { AuthDetails } from "../../types";
+import type { RootState } from "../index";
+import ChatAPI from "../ChatAPI";
+
+/* the session may already be stored (valid token in localStorage) */
+const loadStoredDetails = (): AuthDetails | null => {
+    try {
+        return ChatAPI.getAuthDetails();
+    } catch {
+        return null;
+    }
+};
+
+export interface AuthState {
+    details: AuthDetails | null;
+}
+
+const initialState: AuthState = { details: null };
+
+const authSlice = createSlice({
+    name: "auth",
+    initialState,
+    reducers: {
+        setDetails: (state, action: PayloadAction<AuthDetails>) => {
+            state.details = action.payload;
+        },
+        resetDetails: state => {
+            state.details = null;
+        }
+    }
+});
+
+export const { setDetails, resetDetails } = authSlice.actions;
+
+export const selectAuthDetails = (state: RootState) => state.auth.details;
+
+/* a function, so that the stored session is read when the store is created, not on import */
+export const getInitialAuthState = (): AuthState => ({ details: loadStoredDetails() });
+
+export default authSlice.reducer;

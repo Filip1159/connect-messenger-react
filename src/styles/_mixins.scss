@@ -1,3 +1,5 @@
+@use "./variables" as *;
+
 @mixin setFlex($flexDirection: row,
                 $flexGrow: 0,
                 $justifyContent: normal,

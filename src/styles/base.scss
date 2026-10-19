@@ -1,6 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Lato:wght@400;700&display=swap");
-@import url('https://fonts.googleapis.com/css2?family=Kanit:ital,wght@1,600;1,700;1,800;1,900&family=Varela+Round&display=swap');
-@import "./variables";
+@use "./variables" as *;
 
 body {
     background-color: $primaryColor;
@@ -42,4 +40,10 @@ ul {
 .app__container {
     flex: 1;
     display: flex;
+}
+button:focus-visible,
+[role="button"]:focus-visible,
+input:focus-visible {
+    outline: 2px solid $black;
+    outline-offset: 2px;
 }
