@@ -230,7 +230,7 @@ test.describe("empty, loading and error states", () => {
 
     test("shows placeholders while the chats load", async ({ page }) => {
         await mockBackend(page);
-        await page.route("**/api/chats/1?*", async route => {
+        await page.route("**/api/api/v1/chats?*", async route => {
             await new Promise(resolve => setTimeout(resolve, 800));
             await route.fallback();
         });
@@ -249,7 +249,7 @@ test.describe("empty, loading and error states", () => {
         await page.getByRole("button", { name: "Try again" }).click();
 
         await expect(page.getByRole("button", { name: /Anna Nowak/ })).toBeVisible();
-        expect(backend.requests.filter(r => r.startsWith("GET /chats/1")).length).toBeGreaterThanOrEqual(2);
+        expect(backend.requests.filter(r => r === "GET /chats").length).toBeGreaterThanOrEqual(2);
     });
 
     test("a chat whose messages could not be loaded offers a retry", async ({ page }) => {

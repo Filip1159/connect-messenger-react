@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { AxiosRequestConfig } from "axios";
+import type { AxiosRequestConfig, InternalAxiosRequestConfig } from "axios";
 import { http, NotSignedInError, setSessionLostHandler } from "./http";
 
 const base64 = (value: object) => btoa(JSON.stringify(value)).replace(/=+$/, "");
@@ -31,6 +31,25 @@ describe("http", () => {
         localStorage.setItem("token", token);
         await http.get("/chats/1");
         expect(sent[0].headers!.Authorization).toBe(token);
+    });
+
+    it("keeps the renewed token the backend sends, but only while signed in", async () => {
+        const renewed = `Bearer ${tokenExpiring(3600)}`;
+        const respond = (config: InternalAxiosRequestConfig) => ({ data: {}, status: 200, statusText: "", headers: { authentication: renewed }, config });
+        http.defaults.adapter = async config => respond(config);
+
+        const old = tokenExpiring(60);
+        localStorage.setItem("token", old);
+        await http.get("/chats/1");
+        expect(localStorage.getItem("token")).toBe(renewed);
+
+        localStorage.setItem("token", old);
+        await http.get("/chats/1");
+        localStorage.clear();  // signed out while a request was in flight
+        http.defaults.adapter = async config => { localStorage.clear(); return respond(config); };
+        localStorage.setItem("token", old);
+        await http.get("/chats/1");
+        expect(localStorage.getItem("token")).toBeNull();
     });
 
     it("doesn't send anything without a session, and ends it", async () => {

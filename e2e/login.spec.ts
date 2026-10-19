@@ -73,7 +73,7 @@ test.describe("login", () => {
     test("a 401 from the backend signs the user out", async ({ page }) => {
         await mockBackend(page);
         await signInAs(page);
-        await page.route("**/api/chats/*", route => route.fulfill({ status: 401 }));
+        await page.route(/\/api\/v1\/chats(\?|$)/, route => route.fulfill({ status: 401 }));
         await page.goto("/");
         await expect(page).toHaveURL(/\/login$/);
     });

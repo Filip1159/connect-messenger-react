@@ -93,16 +93,16 @@ test.describe("group chats", () => {
         await dialog.getByRole("textbox", { name: "Group name" }).fill("Crew");
         await dialog.getByRole("button", { name: "Rename" }).click();
         await expect(page.locator(".conversationStatus__name")).toHaveText("Crew");
-        expect(backend.bodies["PATCH /chats/chat/{id}"]).toEqual([ "Crew" ]);
+        expect(backend.bodies["PATCH /chats/{id}"]).toEqual([ "Crew" ]);
 
         await dialog.getByRole("button", { name: "Make admin: Anna Nowak" }).click();
         await expect(dialog.getByRole("button", { name: "Remove admin: Anna Nowak" })).toBeVisible();
-        expect(backend.bodies["PUT /chats/chat/{id}/admins/{userId}"]).toEqual([ ANNA.id ]);
+        expect(backend.bodies["PUT /chats/{id}/admins/{userId}"]).toEqual([ ANNA.id ]);
 
         await dialog.getByRole("button", { name: "Remove from the group: Piotr Zielinski" }).click();
         await expect(dialog.locator(".chatDetails__member").filter({ hasText: "Piotr Zielinski" })).toHaveCount(0);
         await expect(page.locator(".conversationStatus__state")).toHaveText("2 members");
-        expect(backend.bodies["DELETE /chats/chat/{id}/members/{userId}"]).toEqual([ PIOTR.id ]);
+        expect(backend.bodies["DELETE /chats/{id}/members/{userId}"]).toEqual([ PIOTR.id ]);
     });
 
     test("an admin adds people to the group", async ({ page }) => {
@@ -120,7 +120,7 @@ test.describe("group chats", () => {
         await dialog.getByRole("button", { name: /^Add \(1\)/ }).click();
 
         await expect(dialog.locator(".chatDetails__member").filter({ hasText: "Piotr Zielinski" })).toBeVisible();
-        expect(backend.bodies["POST /chats/chat/{id}/members"]).toEqual([ [ PIOTR.id ] ]);
+        expect(backend.bodies["POST /chats/{id}/members"]).toEqual([ [ PIOTR.id ] ]);
         await expect(page.locator(".conversationStatus__state")).toHaveText("3 members");
     });
 
@@ -138,11 +138,11 @@ test.describe("group chats", () => {
 
         await dialog.getByRole("button", { name: "Leave the group" }).click();
         await expect(dialog.getByText("Leave this group?")).toBeVisible();
-        expect(backend.bodies["DELETE /chats/chat/{id}/members/{userId}"]).toBeUndefined();
+        expect(backend.bodies["DELETE /chats/{id}/members/{userId}"]).toBeUndefined();
         await dialog.getByRole("button", { name: "Yes" }).click();
 
         await expect(page.getByRole("dialog")).toHaveCount(0);
-        expect(backend.bodies["DELETE /chats/chat/{id}/members/{userId}"]).toEqual([ ME.id ]);
+        expect(backend.bodies["DELETE /chats/{id}/members/{userId}"]).toEqual([ ME.id ]);
         await expect(page.getByRole("button", { name: /Team/ })).toHaveCount(0);
         await expect(page.getByRole("button", { name: /Anna Nowak/ })).toHaveAttribute("aria-current", "true");
     });
@@ -161,7 +161,7 @@ test.describe("chat options", () => {
         let dialog = await openDetails(page);
         await dialog.getByRole("button", { name: "Archive" }).click();
         await expect(dialog.getByRole("button", { name: "Unarchive" })).toHaveAttribute("aria-pressed", "true");
-        expect(backend.bodies["PATCH /chats/chat/{id}/settings"]).toEqual([ { archived: true } ]);
+        expect(backend.bodies["PATCH /chats/{id}/settings"]).toEqual([ { archived: true } ]);
         await page.keyboard.press("Escape");
 
         // the open chat stays on the screen, the list moved it into the archive
@@ -192,7 +192,7 @@ test.describe("chat options", () => {
         await dialog.getByRole("button", { name: "Mute" }).click();
 
         await expect(dialog.getByRole("button", { name: "Unmute" })).toHaveAttribute("aria-pressed", "true");
-        expect(backend.bodies["PATCH /chats/chat/{id}/settings"]).toEqual([ { muted: true } ]);
+        expect(backend.bodies["PATCH /chats/{id}/settings"]).toEqual([ { muted: true } ]);
         await page.keyboard.press("Escape");
         await expect(page.getByRole("button", { name: /Team/ }).getByRole("img", { name: "Muted" })).toBeVisible();
     });

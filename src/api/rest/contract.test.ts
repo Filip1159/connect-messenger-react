@@ -30,15 +30,15 @@ describe("REST contract", () => {
 
     it("reads chats and their messages", async () => {
         await chats.loadAllChats();
-        expect(lastCall("get")).toEqual([ "/chats/7", { params: { includeMessages: false } } ]);
+        expect(lastCall("get")).toEqual([ "/chats", { params: { includeMessages: false } } ]);
         await chats.loadChat(3);
-        expect(lastCall("get")).toEqual([ "/chats/chat/3" ]);
+        expect(lastCall("get")).toEqual([ "/chats/3" ]);
         await chats.loadMessages(3, 90);
-        expect(lastCall("get")).toEqual([ "/chats/chat/3/messages", { params: { before: 90, size: 50 }, signal: undefined } ]);
+        expect(lastCall("get")).toEqual([ "/chats/3/messages", { params: { before: 90, size: 50 }, signal: undefined } ]);
         await chats.loadMessagesAfter(3, 10);
-        expect(lastCall("get")).toEqual([ "/chats/chat/3/messages", { params: { after: 10, size: 50 }, signal: undefined } ]);
+        expect(lastCall("get")).toEqual([ "/chats/3/messages", { params: { after: 10, size: 50 }, signal: undefined } ]);
         await chats.searchMessages(3, "hi", 40);
-        expect(lastCall("get")).toEqual([ "/chats/chat/3/messages", { params: { query: "hi", before: 40, size: 50 }, signal: undefined } ]);
+        expect(lastCall("get")).toEqual([ "/chats/3/messages", { params: { query: "hi", before: 40, size: 50 }, signal: undefined } ]);
         await chats.loadPresence();
         expect(lastCall("get")).toEqual([ "/presence" ]);
     });
@@ -46,7 +46,7 @@ describe("REST contract", () => {
     it("sends messages, statuses, reactions, edits and deletes", async () => {
         await messages.postMessage(3, "TEXT", "hello", 5);
         const [ url, body ] = lastCall("post");
-        expect(url).toBe("/message");
+        expect(url).toBe("/messages");
         expect(formEntries(body)).toEqual({ chatId: "3", type: "TEXT", replyToId: "5", textContent: "hello" });
         await messages.postMessage(3, "FILE", new File([ "x" ], "a.png"));
         expect(Object.keys(formEntries(lastCall("post")[1]))).toEqual([ "chatId", "type", "fileContent" ]);
@@ -54,17 +54,17 @@ describe("REST contract", () => {
         await chats.updateStatus(3, 12);
         expect(lastCall("put")).toEqual([ "/status", { id: { chatId: 3 }, messageId: 12 } ]);
         await messages.loadMessage(9);
-        expect(lastCall("get")).toEqual([ "/message/9", { signal: undefined } ]);
+        expect(lastCall("get")).toEqual([ "/messages/9", { signal: undefined } ]);
         await messages.react(9, "👍");
-        expect(lastCall("put")).toEqual([ "/message/9/reaction", { emoji: "👍" } ]);
+        expect(lastCall("put")).toEqual([ "/messages/9/reaction", { emoji: "👍" } ]);
         await messages.removeReaction(9);
-        expect(lastCall("delete")).toEqual([ "/message/9/reaction" ]);
+        expect(lastCall("delete")).toEqual([ "/messages/9/reaction" ]);
         await messages.editMessage(9, "new");
-        expect(lastCall("patch")).toEqual([ "/message/9", { textContent: "new" } ]);
+        expect(lastCall("patch")).toEqual([ "/messages/9", { textContent: "new" } ]);
         await messages.deleteMessage(9);
-        expect(lastCall("delete")).toEqual([ "/message/9" ]);
+        expect(lastCall("delete")).toEqual([ "/messages/9" ]);
         await messages.loadFile("a b.png");
-        expect(lastCall("get")).toEqual([ "/message/file/a%20b.png/raw", { responseType: "blob", signal: undefined } ]);
+        expect(lastCall("get")).toEqual([ "/messages/files/a%20b.png", { responseType: "blob", signal: undefined } ]);
     });
 
     it("creates chats and groups and manages them", async () => {
@@ -73,22 +73,22 @@ describe("REST contract", () => {
         await chats.createChat([ 2, 3 ], "Team");
         expect(lastCall("post")).toEqual([ "/chats", { userIds: [ 7, 2, 3 ], name: "Team" } ]);
         await chats.updateChatSettings(3, { muted: true });
-        expect(lastCall("patch")).toEqual([ "/chats/chat/3/settings", { muted: true } ]);
+        expect(lastCall("patch")).toEqual([ "/chats/3/settings", { muted: true } ]);
         await chats.renameChat(3, "New");
-        expect(lastCall("patch")).toEqual([ "/chats/chat/3", { name: "New" } ]);
+        expect(lastCall("patch")).toEqual([ "/chats/3", { name: "New" } ]);
         await chats.addMembers(3, [ 4, 5 ]);
-        expect(lastCall("post")).toEqual([ "/chats/chat/3/members", { userIds: [ 4, 5 ] } ]);
+        expect(lastCall("post")).toEqual([ "/chats/3/members", { userIds: [ 4, 5 ] } ]);
         await chats.removeMember(3, 4);
-        expect(lastCall("delete")).toEqual([ "/chats/chat/3/members/4" ]);
+        expect(lastCall("delete")).toEqual([ "/chats/3/members/4" ]);
         await chats.setAdmin(3, 4, true);
-        expect(lastCall("put")).toEqual([ "/chats/chat/3/admins/4" ]);
+        expect(lastCall("put")).toEqual([ "/chats/3/admins/4" ]);
         await chats.setAdmin(3, 4, false);
-        expect(lastCall("delete")).toEqual([ "/chats/chat/3/admins/4" ]);
+        expect(lastCall("delete")).toEqual([ "/chats/3/admins/4" ]);
     });
 
     it("handles accounts, profile, avatars and blocking", async () => {
         await users.searchUsersByQuery("a b");
-        expect(lastCall("get")).toEqual([ "/user/a%20b", { signal: undefined } ]);
+        expect(lastCall("get")).toEqual([ "/users", { params: { query: "a b" }, signal: undefined } ]);
         await users.register({ username: "u", name: "N", surname: "S", password: "p" });
         expect(lastCall("post")).toEqual([ "/users", { username: "u", name: "N", surname: "S", password: "p" } ]);
         await users.loadProfile();

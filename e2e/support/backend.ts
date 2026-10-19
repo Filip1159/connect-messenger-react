@@ -101,7 +101,8 @@ export const mockBackend = async (page: Page, options: BackendOptions = {}): Pro
     await page.route(url => url.pathname.startsWith("/api/"), async route => {
         const request = route.request();
         const { pathname } = new URL(request.url());
-        const path = pathname.replace(/^\/api/, "");
+        // the app calls <VITE_API_URL = /api>/api/v1/...
+        const path = pathname.replace(/^\/api(\/api\/v1)?/, "");
         const method = request.method();
         backend.requests.push(`${method} ${path}`);
 
@@ -116,7 +117,7 @@ export const mockBackend = async (page: Page, options: BackendOptions = {}): Pro
             return route.fulfill({ status: 200, headers: { authentication: makeToken(user) }, body: "" });
         }
 
-        const history = path.match(/^\/chats\/chat\/(\d+)\/messages$/);
+        const history = path.match(/^\/chats\/(\d+)\/messages$/);
         if (method === "GET" && history && historyFailures > 0) {
             historyFailures--;
             return route.fulfill({ status: 500 });
@@ -137,7 +138,7 @@ export const mockBackend = async (page: Page, options: BackendOptions = {}): Pro
             return json(route, older.slice(-size));
         }
 
-        const reaction = path.match(/^\/message\/(\d+)\/reaction$/);
+        const reaction = path.match(/^\/messages\/(\d+)\/reaction$/);
         if (reaction && (method === "PUT" || method === "DELETE")) {
             const message = backend.chats.flatMap(c => c.messages).find(m => m.id === Number(reaction[1]));
             if (!message) return route.fulfill({ status: 404 });
@@ -155,7 +156,7 @@ export const mockBackend = async (page: Page, options: BackendOptions = {}): Pro
             return json(route, message);
         }
 
-        const single = path.match(/^\/message\/(\d+)$/);
+        const single = path.match(/^\/messages\/(\d+)$/);
         if (single && (method === "PATCH" || method === "DELETE")) {
             const id = Number(single[1]);
             const message = backend.chats.flatMap(c => c.messages).find(m => m.id === id);
@@ -221,7 +222,7 @@ export const mockBackend = async (page: Page, options: BackendOptions = {}): Pro
         }
 
         /* ---- chats: settings, groups */
-        const chatPath = path.match(/^\/chats\/chat\/(\d+)(\/.*)?$/);
+        const chatPath = path.match(/^\/chats\/(\d+)(\/.*)?$/);
         if (chatPath && !chatPath[2]?.startsWith("/messages")) {
             const chat = chatOf(Number(chatPath[1]));
             const rest = chatPath[2] ?? "";
@@ -229,50 +230,50 @@ export const mockBackend = async (page: Page, options: BackendOptions = {}): Pro
             if (method === "GET" && rest === "") return json(route, withFlags(chat));
             if (method === "PATCH" && rest === "/settings") {
                 const body = request.postDataJSON() as { archived?: boolean; muted?: boolean };
-                record("PATCH /chats/chat/{id}/settings", body);
+                record("PATCH /chats/{id}/settings", body);
                 Object.assign(chat, body);
                 return json(route, withFlags(chat));
             }
             if (method === "PATCH" && rest === "") {
                 const { name } = request.postDataJSON() as { name: string };
-                record("PATCH /chats/chat/{id}", name);
+                record("PATCH /chats/{id}", name);
                 chat.name = name;
                 return json(route, withFlags(chat));
             }
             if (method === "POST" && rest === "/members") {
                 const { userIds } = request.postDataJSON() as { userIds: number[] };
-                record("POST /chats/chat/{id}/members", userIds);
+                record("POST /chats/{id}/members", userIds);
                 chat.users.push(...userIds.map(id => backend.users.find(u => u.id === id)!));
                 return json(route, withFlags(chat));
             }
             const member = rest.match(/^\/members\/(\d+)$/);
             if (method === "DELETE" && member) {
-                record("DELETE /chats/chat/{id}/members/{userId}", Number(member[1]));
+                record("DELETE /chats/{id}/members/{userId}", Number(member[1]));
                 chat.users = chat.users.filter(u => u.id !== Number(member[1]));
                 return route.fulfill({ status: 200 });
             }
             const admin = rest.match(/^\/admins\/(\d+)$/);
             if (admin && (method === "PUT" || method === "DELETE")) {
                 const id = Number(admin[1]);
-                record(`${method} /chats/chat/{id}/admins/{userId}`, id);
+                record(`${method} /chats/{id}/admins/{userId}`, id);
                 const others = (chat.adminIds ?? []).filter(a => a !== id);
                 chat.adminIds = method === "PUT" ? [ ...others, id ] : others;
                 return json(route, withFlags(chat));
             }
         }
 
-        if (method === "GET" && /^\/chats\/\d+$/.test(path) && chatLoadFailures > 0) {
+        if (method === "GET" && path === "/chats" && chatLoadFailures > 0) {
             chatLoadFailures--;
             return route.fulfill({ status: 500 });
         }
-        if (method === "GET" && path.startsWith("/chats/")) {
+        if (method === "GET" && path === "/chats") {
             const withMessages = new URL(request.url()).searchParams.get("includeMessages") !== "false";
             const chats = backend.chats.map(withFlags);
             return json(route, withMessages ? chats : chats.map(c => ({ ...c, messages: [] })));
         }
 
-        if (method === "GET" && path.startsWith("/user/")) {
-            const query = decodeURIComponent(path.slice("/user/".length)).toLowerCase();
+        if (method === "GET" && path === "/users") {
+            const query = (new URL(request.url()).searchParams.get("query") ?? "").toLowerCase();
             return json(route, backend.users.filter(u => u.id !== signedInId &&
                 `${u.name} ${u.surname} ${u.username}`.toLowerCase().includes(query)));
         }
@@ -304,7 +305,7 @@ export const mockBackend = async (page: Page, options: BackendOptions = {}): Pro
 
         if (method === "GET" && path === "/presence") return json(route, options.presence ?? []);
 
-        if (method === "POST" && path === "/message") {
+        if (method === "POST" && path === "/messages") {
             /* multipart body: pull the plain text fields out of it */
             const body = request.postData() ?? "";
             const fields: Record<string, string> = {};

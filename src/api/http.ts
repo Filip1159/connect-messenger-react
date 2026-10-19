@@ -1,5 +1,5 @@
 import axios from "axios";
-import { decodeToken, getToken } from "./token";
+import { decodeToken, getToken, setToken } from "./token";
 
 export const baseURL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:8080`;
 
@@ -19,9 +19,10 @@ export class NotSignedInError extends Error {
 const isPublic = (method: string | undefined, url: string | undefined) =>
     url === "/login" || (url === "/users" && method?.toLowerCase() === "post");
 
-export const http = axios.create({ baseURL });
+/* the REST API is versioned; the websocket (socket.ts) lives at the bare baseURL */
+export const http = axios.create({ baseURL: `${baseURL}/api/v1` });
 
-/* the backend expects the raw token in the Authorization header (no "Bearer" scheme) */
+/* the stored token is the complete header value the backend issued ("Bearer <jwt>") */
 http.interceptors.request.use(config => {
     if (isPublic(config.method, config.url)) return config;
     const token = getToken();
@@ -34,7 +35,15 @@ http.interceptors.request.use(config => {
     return config;
 });
 
-http.interceptors.response.use(undefined, error => {
+/* sliding expiry: the backend sends a fresh token (in the `Authentication` header) once the current one is half used up.
+   Only while still signed in - a response that arrives after signing out must not bring the session back. */
+http.interceptors.response.use(response => {
+    const renewed = response.headers?.authentication;
+    if (typeof renewed === "string" && renewed.startsWith("Bearer ") && response.config.url !== "/login" && getToken()) {
+        setToken(renewed);
+    }
+    return response;
+}, error => {
     // the backend rejected our token (e.g. revoked) - drop the session
     if (error.response?.status === 401 && error.config?.url !== "/login") onSessionLost();
     return Promise.reject(error);

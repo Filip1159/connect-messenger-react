@@ -174,7 +174,7 @@ test.describe("chat", () => {
             await page.locator(".messages__container").evaluate(el => { el.scrollTop = 0; });
             await expect(page.locator("#messageId100")).toHaveCount(1, { timeout: 500 });
         }).toPass();
-        expect(backend.requests.filter(r => r.includes("/messages"))).toHaveLength(3);
+        expect(backend.requests.filter(r => r.startsWith("GET /chats/") && r.endsWith("/messages"))).toHaveLength(3);
     });
 
     test("starts a new chat from the user search", async ({ page }) => {
@@ -223,7 +223,7 @@ test.describe("chat", () => {
         await page.getByLabel("Find people").pressSequentially("piotr", { delay: 30 });
 
         await expect(page.getByRole("button", { name: "Piotr Zielinski" })).toBeVisible();
-        expect(backend.requests.filter(r => r.startsWith("GET /user/"))).toHaveLength(1);
+        expect(backend.requests.filter(r => r === "GET /users")).toHaveLength(1);
     });
 });
 

@@ -2,7 +2,7 @@ import type { User } from "../../types";
 import { http } from "../http";
 
 export async function searchUsersByQuery(query: string, signal?: AbortSignal): Promise<User[]> {
-    const res = await http.get(`/user/${encodeURIComponent(query)}`, { signal });
+    const res = await http.get("/users", { params: { query }, signal });
     return res.data;
 }
 
