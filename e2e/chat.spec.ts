@@ -11,14 +11,14 @@ test.describe("chat", () => {
         await page.goto("/");
 
         const item = page.getByRole("button", { name: /Anna Nowak/ });
-        await expect(item).toContainText("Ty: Yes, see you at five");
+        await expect(item).toContainText("You: Yes, see you at five");
     });
 
     test("shows the search field and empty state when there are no chats", async ({ page }) => {
         await mockBackend(page, { chats: [] });
         await page.goto("/");
-        await expect(page.getByLabel("Szukaj:")).toBeVisible();
-        await expect(page.getByText("Brak wiadomości")).toBeVisible();
+        await expect(page.getByLabel("Find people")).toBeVisible();
+        await expect(page.getByText("No chats yet. Find someone with the search above, or start a group.")).toBeVisible();
     });
 
     test("opens a conversation when a chat is selected", async ({ page }) => {
@@ -47,7 +47,7 @@ test.describe("chat", () => {
         await page.goto("/");
         await page.getByRole("button", { name: /Anna Nowak/ }).click();
 
-        const input = page.getByLabel("Message");
+        const input = page.getByLabel("Message", { exact: true });
         await input.fill("See you soon");
         await page.getByRole("button", { name: "Send" }).click();
 
@@ -66,7 +66,7 @@ test.describe("chat", () => {
         await page.goto("/");
         await page.getByRole("button", { name: /Anna Nowak/ }).click();
 
-        await page.getByLabel("Message").fill("See you soon");
+        await page.getByLabel("Message", { exact: true }).fill("See you soon");
         await page.getByRole("button", { name: "Send" }).click();
 
         await expect(page.locator(".singleMessage", { hasText: "See you soon" })).toBeVisible();
@@ -78,7 +78,7 @@ test.describe("chat", () => {
         await page.goto("/");
         await page.getByRole("button", { name: /Anna Nowak/ }).click();
 
-        await page.getByLabel("Message").fill("Flaky network");
+        await page.getByLabel("Message", { exact: true }).fill("Flaky network");
         await page.getByRole("button", { name: "Send" }).click();
 
         await expect(page.getByRole("alert").filter({ hasText: "Not sent" })).toBeVisible();
@@ -94,7 +94,7 @@ test.describe("chat", () => {
         await page.goto("/");
         await page.getByRole("button", { name: /Anna Nowak/ }).click();
 
-        await page.getByLabel("Message").fill("Never mind");
+        await page.getByLabel("Message", { exact: true }).fill("Never mind");
         await page.getByRole("button", { name: "Send" }).click();
         await page.getByRole("button", { name: "Discard" }).click();
 
@@ -181,7 +181,7 @@ test.describe("chat", () => {
         const backend = await mockBackend(page);
         await page.goto("/");
 
-        await page.getByLabel("Szukaj:").fill("piotr");
+        await page.getByLabel("Find people").fill("piotr");
 
         await page.getByRole("button", { name: "Piotr Zielinski" }).click();
 
@@ -195,21 +195,21 @@ test.describe("chat", () => {
         await expect(page.getByRole("button", { name: /Anna Nowak/ })).toBeVisible(); // chats are loaded
         await page.getByRole("button", { name: /Piotr Zielinski/ }).click();  // another chat is open
 
-        await page.getByLabel("Szukaj:").fill("anna");
+        await page.getByLabel("Find people").fill("anna");
         await page.locator(".search__queryResult").getByText("Anna Nowak").click();
 
         await expect.poll(() => backend.posted.chats.length).toBe(1);
         await expect(page.getByRole("button", { name: /Anna Nowak/ })).toHaveCount(1);
         await expect(page.getByRole("button", { name: /Anna Nowak/ })).toHaveAttribute("aria-current", "true");
         await expect(page.getByText("Hi Jan, are we still on for today?")).toBeVisible();
-        await expect(page.getByLabel("Szukaj:")).toHaveValue("");
+        await expect(page.getByLabel("Find people")).toHaveValue("");
     });
 
     test("opens the chat that was just started", async ({ page }) => {
         await mockBackend(page);
         await page.goto("/");
 
-        await page.getByLabel("Szukaj:").fill("piotr");
+        await page.getByLabel("Find people").fill("piotr");
         await page.getByRole("button", { name: "Piotr Zielinski" }).click();
 
         await expect(page.getByRole("button", { name: /Piotr Zielinski/ })).toHaveAttribute("aria-current", "true");
@@ -220,7 +220,7 @@ test.describe("chat", () => {
         const backend = await mockBackend(page);
         await page.goto("/");
 
-        await page.getByLabel("Szukaj:").pressSequentially("piotr", { delay: 30 });
+        await page.getByLabel("Find people").pressSequentially("piotr", { delay: 30 });
 
         await expect(page.getByRole("button", { name: "Piotr Zielinski" })).toBeVisible();
         expect(backend.requests.filter(r => r.startsWith("GET /user/"))).toHaveLength(1);
@@ -267,7 +267,7 @@ test.describe("message features", () => {
         const backend = await mockBackend(page);
         await page.goto("/");
 
-        const input = page.getByLabel("Message");
+        const input = page.getByLabel("Message", { exact: true });
         await input.fill("first line");
         await input.press("Shift+Enter");
         await input.pressSequentially("second line");
@@ -373,7 +373,7 @@ test.describe("message features", () => {
         await theirs.getByRole("button", { name: "Reply" }).click();
         await expect(page.getByText(/Replying to/)).toContainText("Hi Jan, are we still on for today?");
 
-        await page.getByLabel("Message").fill("Yes!");
+        await page.getByLabel("Message", { exact: true }).fill("Yes!");
         await page.keyboard.press("Enter");
 
         await expect.poll(() => backend.posted.messages.length).toBe(1);
@@ -390,7 +390,7 @@ test.describe("message features", () => {
 
         await theirs.hover();
         await theirs.getByRole("button", { name: "Reply" }).click();
-        await page.getByLabel("Message").press("Escape");
+        await page.getByLabel("Message", { exact: true }).press("Escape");
 
         await expect(page.getByText(/Replying to/)).toHaveCount(0);
     });

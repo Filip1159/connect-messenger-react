@@ -4,6 +4,7 @@ import reducer, {
     setChats, setPresence, setTyping, syncChats, updatePresence, updateStatus, upsertChat, removeChat, updateUser,
     setBlocked, addBlocked, removeBlocked, selectTotalUnread
 } from "./chatsSlice";
+import type { RootState } from "../index";
 import { resetDetails } from "../auth/authSlice";
 import type { Message } from "../../types";
 import { makeChat } from "../../test/fixtures";
@@ -210,7 +211,7 @@ describe("chatsSlice", () => {
     it("doesn't count muted chats as unread", () => {
         let state = reducer(withChats(), addMessage(message(30, 1, "2021-01-03T00:00:00", "x"), true));
         state = reducer(state, addMessage(message(31, 2, "2021-01-03T00:00:00", "y"), true));
-        const total = (s: typeof state) => selectTotalUnread({ chats: s, auth: { details: null } });
+        const total = (s: typeof state) => selectTotalUnread({ chats: s } as RootState);
         expect(total(state)).toBe(2);
         state = reducer(state, upsertChat({ ...makeChat(1, null), muted: true }));
         expect(total(state)).toBe(1);

@@ -9,18 +9,32 @@ import {UserDetailsSection} from "./components/userDetailsSection/UserDetailsSec
 import ProtectedRoute from "./components/ProtectedRoute";
 import useChatSync from "./store/chats/useChatSync";
 import useUnreadTitle from "./store/chats/useUnreadTitle";
+import useAppearance from "./store/settings/useAppearance";
 import { useAppSelector } from "./store/hooks";
 import { selectListOpen } from "./store/chats/chatsSlice";
+import { selectAuthDetails } from "./store/auth/authSlice";
+import { ConnectionBanner } from "./components/status/ConnectionBanner";
+import { Announcer } from "./components/status/Announcer";
+import strings from "./strings";
 
 const App = () => {
+    useAppearance();
     useSessionExpiry();
     useChatSync();
     useUnreadTitle();
     const listOpen = useAppSelector(selectListOpen);
+    const signedIn = useAppSelector(selectAuthDetails) !== null;
+
+    const skipToInput = (e: React.MouseEvent) => {
+        e.preventDefault();
+        document.getElementById("message-input")?.focus();
+    };
 
     return (
         <Router>
+            {signedIn && <a href="#message-input" className="skipLink" onClick={skipToInput}>{strings.a11y.skipToInput}</a>}
             <Header/>
+            {signedIn && <><ConnectionBanner/><Announcer/></>}
             <Routes>
                 <Route path="/login" element={<LoginPage/>}/>
                 <Route path="/register" element={<RegisterPage/>}/>

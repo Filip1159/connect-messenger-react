@@ -48,7 +48,7 @@ export const ConversationStatus = ({ chat, onSearch }: { chat: Chat; onSearch?: 
             </button>
             <span className="conversationStatus__avatar"><ChatAvatar chat={chat} myId={myId} /></span>
             <div className="conversationStatus__text">
-                <span className="conversationStatus__name">{chatTitle(chat, myId)}</span>
+                <span id="conversation-title" tabIndex={-1} className="conversationStatus__name">{chatTitle(chat, myId)}</span>
                 <span
                     className={`conversationStatus__state${online ? " conversationStatus__state--online" : ""}`}
                     role="status"

@@ -52,6 +52,8 @@ export interface Chat {
     status: ChatStatus[];
     /* client-side: older messages exist on the server (history is loaded page by page) */
     hasMore?: boolean;
+    /* client-side: the newest messages could not be loaded */
+    messagesFailed?: boolean;
     /* messages of other users that I haven't seen yet */
     unreadCount?: number;
     /* group chats have a title and admins; a 1:1 chat is named after the other person */

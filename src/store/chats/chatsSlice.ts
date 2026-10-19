@@ -149,6 +149,7 @@ const chatsSlice = createSlice({
             const known = new Set(chat.messages.map(m => m.id));
             chat.messages = [ ...messages.filter(m => !known.has(m.id)), ...chat.messages ];
             chat.hasMore = hasMore;
+            chat.messagesFailed = false;
             state.chats = sortChats(state.chats);
         },
         updateStatus: (state, action: PayloadAction<ChatStatus>) => {

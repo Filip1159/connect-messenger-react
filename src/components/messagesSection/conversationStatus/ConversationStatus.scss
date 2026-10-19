@@ -90,3 +90,12 @@
         }
     }
 }
+
+#conversation-title:focus {
+    outline: none;
+}
+
+#conversation-title:focus-visible {
+    outline: 2px solid $focusColor;
+    outline-offset: 2px;
+}

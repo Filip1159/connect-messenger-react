@@ -18,6 +18,7 @@ import { ConversationStatus } from "./conversationStatus/ConversationStatus";
 import { PendingMessage } from "./pendingMessage/PendingMessage";
 import { MessageSearch } from "./messageSearch/MessageSearch";
 import { isGroup } from "../../store/chats/chatUtils";
+import { selectChatsStatus, selectFocusRequest } from "../../store/ui/uiSlice";
 
 /* how many pages of history are loaded at most to reach a message found by the search */
 const MAX_JUMP_PAGES = 40;
@@ -36,6 +37,8 @@ export const MessagesSection = () => {
     const group = isGroup(chat);
     const recipientLastMessage = group ? null : otherLastMessage;  // the "seen" avatar is for 1:1 chats
     const pageVisible = usePageVisible();
+    const chatsStatus = useAppSelector(selectChatsStatus);
+    const focusRequest = useAppSelector(selectFocusRequest);
 
     const [bottom, setBottom] = useState<number | null>(null);  // viewport position of the bottom of the last message seen by recipient
     const [bounds, setBounds] = useState<Bounds | null>(null);  // viewport position of the messages container
@@ -44,6 +47,7 @@ export const MessagesSection = () => {
     const [searchChatId, setSearchChatId] = useState<number | null>(null);  // the chat whose search panel is open
     const [highlightId, setHighlightId] = useState<number | null>(null);  // message the reader jumped to
     const [jumpFailed, setJumpFailed] = useState(false);
+    const [olderState, setOlderState] = useState<{ chatId: number; state: "loading" | "failed" } | null>(null);
 
     const contentDisplayerRef = useRef<HTMLDivElement>(null);
     const lastMessageRef = useRef<HTMLDivElement | null>(null);
@@ -137,15 +141,37 @@ export const MessagesSection = () => {
     const loadOlder = useCallback(() => {
         if (chatId === undefined || firstId === undefined || !hasMore || loadingOlder.current) return;
         loadingOlder.current = true;
+        setOlderState({ chatId, state: "loading" });
         ChatAPI.loadMessages(chatId, firstId)
             .then(messages => {
                 const el = contentDisplayerRef.current;
                 if (el && messages.length > 0) keepScroll.current = { chatId, height: el.scrollHeight, top: el.scrollTop };
                 dispatch(prependMessages({ chatId, messages, hasMore: messages.length >= PAGE_SIZE }));
+                setOlderState(null);
             })
-            .catch(e => console.error("Failed to load older messages:", e))
+            .catch(e => {
+                console.error("Failed to load older messages:", e);
+                setOlderState({ chatId, state: "failed" });
+            })
             .finally(() => { loadingOlder.current = false; });
     }, [chatId, firstId, hasMore, dispatch]);
+
+    /* the newest messages of a chat that failed to load at the start */
+    const retryLatest = () => {
+        if (chatId === undefined) return;
+        setOlderState(null);
+        ChatAPI.loadMessages(chatId)
+            .then(messages => dispatch(prependMessages({ chatId, messages, hasMore: messages.length >= PAGE_SIZE })))
+            .catch(e => {
+                console.error("Failed to load messages:", e);
+                setOlderState({ chatId, state: "failed" });
+            });
+    };
+
+    /* the person chose a chat from the list: the focus follows into the conversation */
+    useEffect(() => {
+        if (focusRequest > 0) document.getElementById("conversation-title")?.focus();
+    }, [ focusRequest ]);
 
     /* keeps the reader at the same message after older ones were put above it */
     useLayoutEffect(() => {
@@ -248,10 +274,20 @@ export const MessagesSection = () => {
             {chat && searchChatId === chat.id &&
                 <MessageSearch key={chat.id} chatId={chat.id} onJump={jumpTo} onClose={() => setSearchChatId(null)}/>}
             {jumpFailed && <div role="alert" className="messages__notice">{strings.search.notFound}</div>}
+            {(chat?.messagesFailed || (olderState?.chatId === chatId && olderState?.state === "failed")) &&
+                <div role="alert" className="messages__notice">
+                    {strings.states.historyFailed}{" "}
+                    <button type="button" onClick={chat?.messagesFailed || messageCount === 0 ? retryLatest : loadOlder}>{strings.states.retry}</button>
+                </div>}
+            {olderState?.chatId === chatId && olderState?.state === "loading" &&
+                <div role="status" className="messages__notice">{strings.states.loadingOlder}</div>}
             {messageCount > 0 || pending.length > 0 ?
                 <div
                     ref={contentDisplayerRef}
                     className="messages__container"
+                    role="log"
+                    aria-live="off"
+                    aria-label={strings.a11y.messages}
                     onScroll={handleScroll}
                 >
                     <div className="messages__container__displayContent">
@@ -261,13 +297,13 @@ export const MessagesSection = () => {
                     <SeenAvatarsPanel bottom={bottom} bounds={bounds} viewportHeight={viewportHeight}/>
                 </div>
                 :
-                <span className="noMessages">{strings.chats.noMessages}</span>
+                <span className="noMessages">{chat ? strings.chats.noMessages : chatsStatus === "ready" ? strings.states.pickChat : ""}</span>
             }
             {newBelow &&
                 <button type="button" className="messages__newBelow" onClick={scrollToBottom}>
                     {strings.messageStatus.newMessages}
                 </button>}
-            <NewMessageInput/>
+            {chat && <NewMessageInput/>}
         </div>
     );
 }

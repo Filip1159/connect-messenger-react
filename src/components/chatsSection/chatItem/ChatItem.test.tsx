@@ -19,14 +19,14 @@ describe("ChatItem", () => {
     it("shows the recipient and the last message preview", () => {
         renderItem(makeChat(1, "2021-01-01T10:00:00"));
         expect(screen.getByText("Name2 Surname2")).toBeInTheDocument();
-        expect(screen.getByText("Ty: hi")).toBeInTheDocument();
+        expect(screen.getByText("You: hi")).toBeInTheDocument();
     });
 
     it("shows a placeholder instead of the file name for image messages", () => {
         const chat = makeChat(1, "2021-01-01T10:00:00");
         chat.messages[0] = { ...chat.messages[0], type: "FILE", content: "abc.png" };
         renderItem(chat);
-        expect(screen.getByText("Ty: Zdjęcie")).toBeInTheDocument();
+        expect(screen.getByText("You: Photo")).toBeInTheDocument();
     });
 
     it("shows how many messages are unread", () => {

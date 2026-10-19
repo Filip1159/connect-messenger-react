@@ -19,7 +19,7 @@ test.describe("registration", () => {
         expect(backend.bodies["POST /users"]).toEqual([
             { username: "kasia.m", name: "Kasia", surname: "Malinowska", password: "secret123" }
         ]);
-        await expect(page.getByLabel("Szukaj:")).toBeVisible();
+        await expect(page.getByLabel("Find people")).toBeVisible();
         expect(await page.evaluate(() => localStorage.getItem("token"))).toBeTruthy();
     });
 

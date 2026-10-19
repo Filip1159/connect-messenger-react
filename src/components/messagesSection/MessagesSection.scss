@@ -19,6 +19,17 @@
         font-size: 13px;
     }
 
+    &__notice button {
+        margin-left: 8px;
+        padding: 2px 10px;
+        border: 1px solid $borderColor;
+        border-radius: 8px;
+        background: $surfaceColor;
+        color: $primaryTextColor;
+        font-size: 13px;
+        cursor: pointer;
+    }
+
     &__newBelow {
         position: absolute;
         bottom: 84px;
@@ -29,7 +40,7 @@
         border: none;
         border-radius: 18px;
         background: $tooltipBackgroundColor;
-        color: $whiteTextColor;
+        color: $onAccentTextColor;
         font-weight: 700;
         box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
         cursor: pointer;

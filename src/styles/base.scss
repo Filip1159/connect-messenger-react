@@ -1,5 +1,32 @@
 @use "./variables" as *;
 
+/* colours of the two themes; theme.ts sets data-theme on <html> (the contrast of the pairs is checked by a test) */
+:root {
+    color-scheme: dark;
+    --background: #282C34;
+    --surface: #20242b;
+    --surface-raised: #2c313a;
+    --border: #3a404c;
+    --text: #FFFFFF;
+    --muted: #9aa3b2;
+    --danger: #ff8a80;
+    --accent-text: #E7EB59;
+    --focus: #E7EB59;
+}
+
+:root[data-theme="light"] {
+    color-scheme: light;
+    --background: #f1f3f6;
+    --surface: #ffffff;
+    --surface-raised: #e9ecf1;
+    --border: #c9ced8;
+    --text: #14171c;
+    --muted: #4f5766;
+    --danger: #b3261e;
+    --accent-text: #6b5d00;
+    --focus: #1a5fb4;
+}
+
 *, *::before, *::after {
     box-sizing: border-box;
 }
@@ -28,7 +55,7 @@ input[type="text"], input[type="password"], input[type="search"], textarea {
     transition: border-color $transitionTime;
 
     &:focus {
-        border-color: $primaryColor;
+        border-color: $focusColor;
     }
 }
 
@@ -73,7 +100,7 @@ button:focus-visible,
 [role="button"]:focus-visible,
 input:focus-visible,
 textarea:focus-visible {
-    outline: 2px solid $primaryColor;
+    outline: 2px solid $focusColor;
     outline-offset: 2px;
 }
 
@@ -91,4 +118,20 @@ textarea:focus-visible {
     overflow: hidden;
     clip: rect(0 0 0 0);
     white-space: nowrap;
+}
+
+.skipLink {
+    position: absolute;
+    top: -100px;
+    left: 8px;
+    z-index: 2000;
+    padding: 8px 14px;
+    border-radius: 8px;
+    background: $surfaceColor;
+    color: $primaryTextColor;
+    font-weight: 700;
+
+    &:focus {
+        top: 8px;
+    }
 }

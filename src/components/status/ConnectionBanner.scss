@@ -1,0 +1,21 @@
+@use "../../styles/variables" as *;
+
+.connectionBanner {
+    display: none;
+    flex: none;
+    padding: 6px 16px;
+    background: $tooltipBackgroundColor;
+    color: $onAccentTextColor;
+    font-size: 14px;
+    font-weight: 700;
+    text-align: center;
+
+    &--visible {
+        display: block;
+    }
+
+    &--offline {
+        background: $dangerColor;
+        color: $black;
+    }
+}

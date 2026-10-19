@@ -73,7 +73,7 @@ test.describe("group chats", () => {
         await page.goto("/");
 
         const item = page.getByRole("button", { name: /Team/ });
-        await expect(item).toContainText("Ty: Let's start");
+        await expect(item).toContainText("You: Let's start");
         await item.click();
 
         await expect(page.locator(".conversationStatus__name")).toHaveText("Team");

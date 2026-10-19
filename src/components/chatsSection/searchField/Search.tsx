@@ -16,7 +16,7 @@ export const Search = () => {
     const dispatch = useAppDispatch();
     const [ text, setText ] = useState("");
     const [ groupOpen, setGroupOpen ] = useState(false);
-    const { users, query } = useUserSearch(text);
+    const { users, query, searching, failed } = useUserSearch(text);
 
     /* an existing chat with the person is opened instead of a second one */
     const openChat = (user: User) => {
@@ -45,6 +45,11 @@ export const Search = () => {
             </div>
             {query !== "" &&
                 <div className="search__queryResult">
+                    {query.length < 2 && <p role="status" className="search__state">{strings.states.typeMore}</p>}
+                    {query.length >= 2 && searching && <p role="status" className="search__state">{strings.states.searching}</p>}
+                    {failed && <p role="alert" className="search__state">{strings.search.failed}</p>}
+                    {query.length >= 2 && !searching && !failed && users.length === 0 &&
+                        <p role="status" className="search__state">{strings.states.noPeople}</p>}
                     <ul>{
                         users.map(u => (
                             <li

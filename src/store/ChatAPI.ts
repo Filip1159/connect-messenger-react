@@ -53,6 +53,8 @@ export interface SocketHandlers {
     onPresence: MessageCallback;
     /* the connection was re-established after a drop: events may have been missed */
     onReconnect: () => void;
+    /* the websocket is up, or it dropped after having been up */
+    onConnection: (state: "connected" | "reconnecting") => void;
 }
 
 export const PAGE_SIZE = 50;
@@ -151,11 +153,13 @@ class ChatAPI {
                 client.subscribe(`/topic/removed-chats/${this.getAuthDetails().id}`, message => this.handlers?.onChatRemoved(message));
                 this.chatCallbacks.forEach((callbacks, chatId) => this.subscribe(chatId, callbacks));
                 this.watchedUsers.forEach(userId => this.subscribePresence(userId));
+                this.handlers?.onConnection("connected");
                 if (this.connectedOnce) this.handlers?.onReconnect();
                 this.connectedOnce = true;
             },
             onStompError: frame => console.error("STOMP error:", frame.headers.message),
             onWebSocketError: () => console.error("Websocket error"),
+            onWebSocketClose: () => { if (this.connectedOnce) this.handlers?.onConnection("reconnecting"); },
         });
         this.stompClient = client;
         client.activate();

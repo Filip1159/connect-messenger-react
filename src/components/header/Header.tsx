@@ -4,16 +4,18 @@ import { useNavigate } from "react-router-dom";
 import strings from "../../strings";
 import ChatAPI from "../../store/ChatAPI";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPowerOff } from '@fortawesome/free-solid-svg-icons'
+import { faGear, faPowerOff } from '@fortawesome/free-solid-svg-icons'
 import { useAppSelector } from "../../store/hooks";
 import { selectAuthDetails } from "../../store/auth/authSlice";
 import Avatar from "../common/Avatar";
 import { ProfileDialog } from "../profile/ProfileDialog";
+import { SettingsDialog } from "../settings/SettingsDialog";
 
 const Header = () => {
     const navigate = useNavigate();
     const authDetails = useAppSelector(selectAuthDetails);
     const [ profileOpen, setProfileOpen ] = useState(false);
+    const [ settingsOpen, setSettingsOpen ] = useState(false);
 
     return (
         <header className="header">
@@ -36,6 +38,15 @@ const Header = () => {
                 <button
                     type="button"
                     className="header__logout"
+                    aria-label={strings.settings.open}
+                    title={strings.settings.open}
+                    onClick={() => setSettingsOpen(true)}
+                >
+                    <FontAwesomeIcon icon={faGear} size="3x" />
+                </button>
+                <button
+                    type="button"
+                    className="header__logout"
                     aria-label={strings.header.signOut}
                     title={strings.header.signOut}
                     onClick={() => {
@@ -48,6 +59,7 @@ const Header = () => {
                 </div>
             }
             {profileOpen && <ProfileDialog onClose={() => setProfileOpen(false)} />}
+            {settingsOpen && <SettingsDialog onClose={() => setSettingsOpen(false)} />}
         </header>
     );
 }

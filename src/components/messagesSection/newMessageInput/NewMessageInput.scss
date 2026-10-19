@@ -31,7 +31,7 @@
     }
 
     &--dragging {
-        outline: 2px dashed $primaryColor;
+        outline: 2px dashed $focusColor;
         outline-offset: -4px;
     }
 
@@ -53,7 +53,7 @@
         gap: 10px;
         margin: 8px 12px 0;
         padding: 6px 10px;
-        border-left: 3px solid $primaryColor;
+        border-left: 3px solid $focusColor;
         border-radius: 4px;
         background: $surfaceRaisedColor;
         color: $whiteTextColor;
@@ -135,7 +135,7 @@
 
     &__emojiBtn {
         font-size: 20px;
-        color: $primaryColor;
+        color: $accentTextColor;
     }
 
     &__input {
@@ -165,5 +165,13 @@
 
     &__btn {
         padding: 6px;
+    }
+}
+
+/* the bundled icons are yellow, which is too pale on the light theme */
+:root[data-theme="light"] {
+    .newMessageInput__btn,
+    .newMessageInput__fileInputLabel__img {
+        filter: brightness(0.5) saturate(1.8);
     }
 }

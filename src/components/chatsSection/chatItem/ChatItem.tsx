@@ -35,7 +35,7 @@ export const ChatItem = ({chat, modifier, onClick}: ChatItemProps) => {
     const online = !group && presence[user.id]?.online;
     const title = chatTitle(chat, authDetails?.id);
 
-    /* who wrote the last message: "Ty", or the first name of the author */
+    /* who wrote the last message: "You", or the first name of the author */
     const author = lastMessage && (lastMessage.userId === authDetails?.id
         ? strings.chats.you
         : chat.users.find(u => u.id === lastMessage.userId)?.name ?? user.name);

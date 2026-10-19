@@ -58,6 +58,12 @@
         }
     }
 
+    &__state {
+        margin: 8px 4px 0;
+        font-size: 14px;
+        color: $mutedTextColor;
+    }
+
     &__queryResult ul {
         padding: 0;
         margin: 6px 0 0;

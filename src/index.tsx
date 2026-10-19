@@ -3,6 +3,12 @@ import "./styles/base.scss";
 import App from "./App";
 import { Provider } from "react-redux";
 import store from "./store";
+import { applyTheme } from "./store/settings/theme";
+import { setLocale } from "./i18n";
+
+// before the first render, so the page doesn't flash in the wrong theme or language
+applyTheme(store.getState().settings.theme);
+setLocale(store.getState().settings.locale);
 
 window.addEventListener("resize", () => {
     const vh = window.innerHeight * .01;

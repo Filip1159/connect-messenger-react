@@ -148,10 +148,10 @@
         align-items: center;
         gap: 4px;
         padding: 2px 8px;
-        border: 1px solid $borderColor;
+        border: 1px solid $chipBorderColor;
         border-radius: 12px;
-        background: $surfaceRaisedColor;
-        color: $whiteTextColor;
+        background: $chipColor;
+        color: $onAccentTextColor;
         font: inherit;
         font-size: 12px;
         line-height: 1.3;
@@ -164,7 +164,7 @@
             cursor: pointer;
 
             &:hover:not(:disabled) {
-                background: $borderColor;
+                background: $chipBorderColor;
             }
         }
     }
@@ -206,7 +206,7 @@
             border: none;
             border-radius: 12px;
             background: $bubbleTextColor;
-            color: $whiteTextColor;
+            color: $onAccentTextColor;
             font: inherit;
             font-size: 13px;
 

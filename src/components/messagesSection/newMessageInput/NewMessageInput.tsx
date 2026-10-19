@@ -200,7 +200,7 @@ const NewMessageInput = () => {
                     <FontAwesomeIcon icon={faFaceSmile} />
                 </button>
                 {emojiOpen && <EmojiPicker onPick={insertEmoji}/>}
-                <textarea ref={textarea} rows={1} value={textContent} className="newMessageInput__input"
+                <textarea id="message-input" ref={textarea} rows={1} value={textContent} className="newMessageInput__input"
                           aria-label={strings.messageInput.messageText} maxLength={MAX_TEXT_LENGTH}
                           onKeyDown={handleKeyDown}
                           onPaste={handlePaste}

@@ -1,3 +1,5 @@
+import { getLocale } from "./i18n";
+
 const pad = (n: number): string => String(n).padStart(2, "0");
 const FIVE_MINUTES = 5 * 60 * 1000;
 
@@ -10,7 +12,11 @@ class DateFormatter {
         private readonly nextDate: Date | null
     ) {}
 
-    static #days = ["Niedziela", "Poniedziałek", "Wtorek", "Środa", "Czwartek", "Piątek", "Sobota"];
+    /* the weekday in the language of the app, with a capital letter */
+    static #day(date: Date): string {
+        const name = new Intl.DateTimeFormat(getLocale(), { weekday: "long" }).format(date);
+        return name.charAt(0).toUpperCase() + name.slice(1);
+    }
 
     /* accepts "2021-05-04T12:30:15", "2021-05-04 12:30", fractional seconds and explicit timezones */
     static sqlToDateObject(sqlString: string): Date {
@@ -25,12 +31,12 @@ class DateFormatter {
 
     currentToPretty(): string {
         const d = this.currentDate;
-        return `${DateFormatter.#days[d.getDay()]}, ${d.getFullYear()}.${pad(d.getMonth() + 1)}.${pad(d.getDate())}, ${this.currentToHourMinute()}`;
+        return `${DateFormatter.#day(d)}, ${d.getFullYear()}.${pad(d.getMonth() + 1)}.${pad(d.getDate())}, ${this.currentToHourMinute()}`;
     }
 
     displayDayIfDifferent(): string {
         const sameDay = this.prevDate && this.prevDate.toDateString() === this.currentDate.toDateString();
-        return sameDay ? "" : `${DateFormatter.#days[this.currentDate.getDay()]}, `;
+        return sameDay ? "" : `${DateFormatter.#day(this.currentDate)}, `;
     }
 
     is5MinDiffBefore(): boolean {

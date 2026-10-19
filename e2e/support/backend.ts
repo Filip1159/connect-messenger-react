@@ -56,6 +56,9 @@ export interface BackendOptions {
     failMessagePosts?: number;
     presence?: { userId: number; online: boolean; lastSeen: string | null }[];
     blocked?: User[];
+    /* the first N loads of the chat list / of a page of messages fail with a 500 */
+    failChatLoads?: number;
+    failHistoryLoads?: number;
     /* the avatar of ME: an uploaded one is served as a tiny PNG */
     avatarKey?: string;
 }
@@ -82,6 +85,8 @@ export const mockBackend = async (page: Page, options: BackendOptions = {}): Pro
     const password = options.password ?? "secret";
     let failuresLeft = options.failMessagePosts ?? 0;
     let nextMessageId = 1000;
+    let chatLoadFailures = options.failChatLoads ?? 0;
+    let historyFailures = options.failHistoryLoads ?? 0;
     let nextChatId = 20;
     let nextUserId = 100;
     let currentPassword = password;
@@ -111,6 +116,10 @@ export const mockBackend = async (page: Page, options: BackendOptions = {}): Pro
         }
 
         const history = path.match(/^\/chats\/chat\/(\d+)\/messages$/);
+        if (method === "GET" && history && historyFailures > 0) {
+            historyFailures--;
+            return route.fulfill({ status: 500 });
+        }
         if (method === "GET" && history) {
             const params = new URL(request.url()).searchParams;
             const before = Number(params.get("before") ?? Infinity);
@@ -251,6 +260,10 @@ export const mockBackend = async (page: Page, options: BackendOptions = {}): Pro
             }
         }
 
+        if (method === "GET" && /^\/chats\/\d+$/.test(path) && chatLoadFailures > 0) {
+            chatLoadFailures--;
+            return route.fulfill({ status: 500 });
+        }
         if (method === "GET" && path.startsWith("/chats/")) {
             const withMessages = new URL(request.url()).searchParams.get("includeMessages") !== "false";
             const chats = backend.chats.map(withFlags);

@@ -9,6 +9,8 @@ import {
     addChat, addMessage, removeChat, setBlocked, setChats, setPresence, setTyping, syncChats, updatePresence, updateStatus, upsertChat, updateUser
 } from "./chatsSlice";
 import ChatAPI, { PAGE_SIZE } from "../ChatAPI";
+import { handleIncoming } from "./incoming";
+import { selectReloadCount, setChatsStatus, setConnection } from "../ui/uiSlice";
 
 /* how long somebody is shown as writing after their last typing event */
 const TYPING_TIMEOUT = 4000;
@@ -25,6 +27,7 @@ const useChatSync = () => {
     const store = useStore<RootState>();
     // only the identity matters: a profile change (name, avatar) must not restart the whole sync
     const myId = useAppSelector(selectAuthDetails)?.id;
+    const reloadCount = useAppSelector(selectReloadCount);  // "try again" after a failed load
 
     useEffect(() => {
         if (myId === undefined) return;
@@ -43,7 +46,12 @@ const useChatSync = () => {
 
         const onMessage = (incoming: IMessage) => {
             const parsed = parse<Message>(incoming);
-            if (parsed) dispatch(addMessage(parsed, parsed.userId !== myId));
+            if (!parsed) return;
+            const state = store.getState();
+            const chat = state.chats.chats.find(c => c.id === parsed.chatId);
+            const isNew = !!chat && !chat.messages.some(m => m.id === parsed.id);  // not an edit, a reaction or a duplicate
+            dispatch(addMessage(parsed, parsed.userId !== myId));
+            if (chat && isNew) handleIncoming(dispatch, state, chat, parsed, myId);
         };
 
         const onStatus = (incoming: IMessage) => {
@@ -80,7 +88,7 @@ const useChatSync = () => {
                 return { ...chat, messages, hasMore: messages.length >= PAGE_SIZE };
             } catch (e) {
                 console.error(`Failed to load messages of chat ${chat.id}:`, e);
-                return chat;
+                return { ...chat, messagesFailed: true };
             }
         };
 
@@ -155,23 +163,30 @@ const useChatSync = () => {
             .then(users => dispatch(setBlocked(users)))
             .catch(e => console.error("Failed to load blocked users:", e));
 
+        const onConnection = (state: "connected" | "reconnecting") => dispatch(setConnection(state));
+
         let cancelled = false;
+        dispatch(setConnection("connecting"));
         ChatAPI.loadAllChats()
             .then(chats => Promise.all(chats.map(withLatestMessages)))
             .then(chats => {
                 if (cancelled) return;
                 dispatch(setChats(chats));
-                ChatAPI.initWebsocket(chats, callbacks, { onNewChat, onChatRemoved, onPresence, onReconnect });
+                dispatch(setChatsStatus("ready"));
+                ChatAPI.initWebsocket(chats, callbacks, { onNewChat, onChatRemoved, onPresence, onReconnect, onConnection });
                 loadPresence();
             })
-            .catch(e => console.error("Failed to load chats:", e));
+            .catch(e => {
+                console.error("Failed to load chats:", e);
+                if (!cancelled) dispatch(setChatsStatus("failed"));
+            });
 
         return () => {
             cancelled = true;
             typingTimers.forEach(clearTimeout);
             ChatAPI.closeWebsocket();
         };
-    }, [ myId, dispatch, store ]);
+    }, [ myId, reloadCount, dispatch, store ]);
 }
 
 export default useChatSync;
