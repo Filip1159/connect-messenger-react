@@ -4,10 +4,10 @@ import { Provider } from "react-redux";
 import type { ReactNode } from "react";
 import { makeStore } from "../index";
 import useChatSync from "./useChatSync";
-import ChatAPI from "../ChatAPI";
+import { socket } from "../../api/socket";
 import * as chatsApi from "../../api/rest/chats";
 import * as usersApi from "../../api/rest/users";
-import type { ChatCallbacks, SocketHandlers } from "../ChatAPI";
+import type { ChatCallbacks, SocketHandlers } from "../../api/socket";
 import type { IMessage } from "@stomp/stompjs";
 import type { Message } from "../../types";
 import { makeChat } from "../../test/fixtures";
@@ -20,19 +20,19 @@ vi.mock("../../api/rest/chats", () => ({
     loadPresence: vi.fn()
 }));
 vi.mock("../../api/rest/users", () => ({ loadProfile: vi.fn(), loadBlocked: vi.fn() }));
-vi.mock("../ChatAPI", () => ({
-    default: {
-        onSignOut: vi.fn(),
-        getAuthDetails: vi.fn(() => { throw new Error("not signed in"); }),
-        initWebsocket: vi.fn(),
-        closeWebsocket: vi.fn(),
+vi.mock("../../api/socket", () => ({
+    socket: {
+        connect: vi.fn(),
+        close: vi.fn(),
         subscribeToChat: vi.fn(),
-        watchUser: vi.fn(),
         unsubscribeChat: vi.fn(),
+        watchUser: vi.fn(),
+        sendTyping: vi.fn(),
     }
 }));
 
-const api = { ...vi.mocked(ChatAPI), ...vi.mocked(chatsApi), ...vi.mocked(usersApi) };
+const api = { ...vi.mocked(chatsApi), ...vi.mocked(usersApi) };
+const sock = vi.mocked(socket);
 const me = { id: 1, username: "user1", name: "Name1", surname: "Surname1", exp: 0 };
 const frame = (body: unknown) => ({ body: JSON.stringify(body) }) as IMessage;
 const msg = (id: number, chatId: number, userId: number): Message =>
@@ -42,8 +42,8 @@ const start = async () => {
     const store = makeStore({ auth: { details: me } });
     const wrapper = ({ children }: { children: ReactNode }) => <Provider store={store}>{children}</Provider>;
     renderHook(() => useChatSync(), { wrapper });
-    await waitFor(() => expect(api.initWebsocket).toHaveBeenCalled());
-    const [ , callbacks, handlers ] = api.initWebsocket.mock.calls[0] as unknown as [ unknown, ChatCallbacks, SocketHandlers ];
+    await waitFor(() => expect(sock.connect).toHaveBeenCalled());
+    const [ , callbacks, handlers ] = sock.connect.mock.calls[0] as unknown as [ unknown, ChatCallbacks, SocketHandlers ];
     return { store, callbacks, handlers };
 };
 
@@ -72,7 +72,7 @@ describe("useChatSync", () => {
         const group = store.getState().chats.chats.find(c => c.id === 5)!;
         expect(group).toMatchObject({ group: true, name: "Team" });
         expect(group.messages.map(m => m.id)).toEqual([ 7 ]);
-        expect(api.subscribeToChat).toHaveBeenCalledWith(5, expect.anything());
+        expect(sock.subscribeToChat).toHaveBeenCalledWith(5, expect.anything());
     });
 
     it("updates a known chat instead of replacing it (the messages stay)", async () => {
@@ -92,7 +92,7 @@ describe("useChatSync", () => {
         handlers.onChatRemoved(frame({ chatId: 1 }));
 
         expect(store.getState().chats.chats).toEqual([]);
-        expect(api.unsubscribeChat).toHaveBeenCalledWith(1);
+        expect(sock.unsubscribeChat).toHaveBeenCalledWith(1);
     });
 
     it("loads the newest page of every chat, presence and flags that older messages exist", async () => {
@@ -133,8 +133,8 @@ describe("useChatSync", () => {
         expect(chats.find(c => c.id === 1)).toMatchObject({ unreadCount: 2 });
         expect(chats.find(c => c.id === 1)!.messages.map(m => m.id)).toEqual([ 1, 2, 3 ]);
         expect(chats.some(c => c.id === 2)).toBe(true);
-        expect(api.subscribeToChat).toHaveBeenCalledWith(2, expect.anything());
-        expect(api.watchUser).toHaveBeenCalledWith(3);
+        expect(sock.subscribeToChat).toHaveBeenCalledWith(2, expect.anything());
+        expect(sock.watchUser).toHaveBeenCalledWith(3);
     });
 
     it("drops the chats I was removed from while offline", async () => {
@@ -144,7 +144,7 @@ describe("useChatSync", () => {
         await handlers.onReconnect();
 
         expect(store.getState().chats.chats.map(c => c.id)).toEqual([ 2 ]);
-        expect(api.unsubscribeChat).toHaveBeenCalledWith(1);
+        expect(sock.unsubscribeChat).toHaveBeenCalledWith(1);
     });
 
     it("follows pages while catching up", async () => {

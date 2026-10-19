@@ -2,7 +2,7 @@ import "./Header.scss";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import strings from "../../strings";
-import ChatAPI from "../../store/ChatAPI";
+import { signOut } from "../../api/session";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faGear, faPowerOff } from '@fortawesome/free-solid-svg-icons'
 import { useAppSelector } from "../../store/hooks";
@@ -50,7 +50,7 @@ const Header = () => {
                     aria-label={strings.header.signOut}
                     title={strings.header.signOut}
                     onClick={() => {
-                        ChatAPI.signOut();  // notifies AuthContext, which also clears chats
+                        signOut();  // the store clears the chats, the socket closes
                         navigate('/login')
                     }}
                 >

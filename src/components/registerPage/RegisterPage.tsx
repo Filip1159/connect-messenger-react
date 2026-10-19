@@ -4,7 +4,7 @@ import axios from "axios";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { selectAuthDetails, setDetails } from "../../store/auth/authSlice";
-import ChatAPI from "../../store/ChatAPI";
+import { getAuthDetails, signIn } from "../../api/session";
 import strings from "../../strings";
 import { validateName, validatePassword, validateUsername } from "./registerValidation";
 import "../loginPage/LoginPage.scss";
@@ -42,9 +42,9 @@ const RegisterPage = () => {
         setError(null);
         try {
             await usersApi.register({ username: username.trim(), name: name.trim(), surname: surname.trim(), password });
-            const result = await ChatAPI.signIn(username.trim(), password);
+            const result = await signIn(username.trim(), password);
             if (!result.success) throw new Error("The new account could not sign in");
-            dispatch(setDetails(ChatAPI.getAuthDetails()));
+            dispatch(setDetails(getAuthDetails()));
             navigate("/");
         } catch (err) {
             console.error("Registration failed:", err);

@@ -7,9 +7,7 @@ import NewMessageInput from "./NewMessageInput";
 import { sendMessage } from "../../../store/chats/outbox";
 import { makeChat } from "../../../test/fixtures";
 
-vi.mock("../../../store/ChatAPI", () => ({
-    default: { sendTyping: vi.fn(), onSignOut: vi.fn(), getAuthDetails: vi.fn(() => ({ id: 1 })) }
-}));
+vi.mock("../../../api/socket", () => ({ socket: { sendTyping: vi.fn() } }));
 vi.mock("../../../store/chats/outbox", () => ({ sendMessage: vi.fn(() => Promise.resolve()) }));
 
 const send = vi.mocked(sendMessage);

@@ -4,7 +4,6 @@ import chatsReducer from "./chats/chatsSlice";
 import settingsReducer, { loadSettings, saveSettings } from "./settings/settingsSlice";
 import uiReducer from "./ui/uiSlice";
 import { onSignOut } from "../api/session";
-import "./ChatAPI"; // closes the websocket on sign-out
 
 const rootReducer = combineReducers({
     auth: authReducer,

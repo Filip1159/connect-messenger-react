@@ -6,7 +6,7 @@ import { removeBlocked, selectActiveChat, selectBlocked, selectReplyTarget, setR
 import { getRecipient, isGroup } from "../../../store/chats/chatUtils";
 import "./NewMessageInput.scss";
 import strings from "../../../strings";
-import ChatAPI from "../../../store/ChatAPI";
+import { socket } from "../../../api/socket";
 import { selectAuthDetails } from "../../../store/auth/authSlice";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faFaceSmile } from "@fortawesome/free-solid-svg-icons";
@@ -110,7 +110,7 @@ const NewMessageInput = () => {
         const now = Date.now();
         if (now - lastTypingSent.current < TYPING_THROTTLE) return;
         lastTypingSent.current = now;
-        ChatAPI.sendTyping(chatId);
+        socket.sendTyping(chatId);
     };
 
     const insertEmoji = (emoji: string) => {

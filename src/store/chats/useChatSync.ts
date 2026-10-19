@@ -8,7 +8,7 @@ import { selectAuthDetails, updateDetails } from "../auth/authSlice";
 import {
     addChat, addMessage, removeChat, setBlocked, setChats, setPresence, setTyping, syncChats, updatePresence, updateStatus, upsertChat, updateUser
 } from "./chatsSlice";
-import ChatAPI from "../ChatAPI";
+import { socket } from "../../api/socket";
 import { handleIncoming } from "./incoming";
 import { selectReloadCount, setChatsStatus, setConnection } from "../ui/uiSlice";
 import * as chatsApi from "../../api/rest/chats";
@@ -96,8 +96,8 @@ const useChatSync = () => {
 
         const addNewChat = (chat: Chat) => {
             dispatch(addChat(chat));
-            ChatAPI.subscribeToChat(chat.id, callbacks);
-            chat.users.forEach(u => ChatAPI.watchUser(u.id));
+            socket.subscribeToChat(chat.id, callbacks);
+            chat.users.forEach(u => socket.watchUser(u.id));
         };
 
         /* a chat of mine that is new to me (created, or I was added to it) is loaded with its latest messages; a known one is only updated */
@@ -106,7 +106,7 @@ const useChatSync = () => {
             if (!parsedChat) return;
             if (store.getState().chats.chats.some(c => c.id === parsedChat.id)) {
                 dispatch(upsertChat(parsedChat));
-                parsedChat.users.forEach(u => ChatAPI.watchUser(u.id));
+                parsedChat.users.forEach(u => socket.watchUser(u.id));
                 loadPresence();
                 return;
             }
@@ -118,7 +118,7 @@ const useChatSync = () => {
         const onChatRemoved = (incoming: IMessage) => {
             const removed = parse<{ chatId: number }>(incoming);
             if (!removed) return;
-            ChatAPI.unsubscribeChat(removed.chatId);
+            socket.unsubscribeChat(removed.chatId);
             dispatch(removeChat(removed.chatId));
         };
 
@@ -141,7 +141,7 @@ const useChatSync = () => {
                 // groups I was removed from while the connection was down
                 known.forEach((_, id) => {
                     if (fresh.some(c => c.id === id)) return;
-                    ChatAPI.unsubscribeChat(id);
+                    socket.unsubscribeChat(id);
                     dispatch(removeChat(id));
                 });
                 await Promise.all(fresh.filter(c => known.has(c.id)).map(c => catchUp(known.get(c.id) as Chat)));
@@ -175,7 +175,7 @@ const useChatSync = () => {
                 if (cancelled) return;
                 dispatch(setChats(chats));
                 dispatch(setChatsStatus("ready"));
-                ChatAPI.initWebsocket(chats, callbacks, { onNewChat, onChatRemoved, onPresence, onReconnect, onConnection });
+                socket.connect(chats, callbacks, { onNewChat, onChatRemoved, onPresence, onReconnect, onConnection });
                 loadPresence();
             })
             .catch(e => {
@@ -186,7 +186,7 @@ const useChatSync = () => {
         return () => {
             cancelled = true;
             typingTimers.forEach(clearTimeout);
-            ChatAPI.closeWebsocket();
+            socket.close();
         };
     }, [ myId, reloadCount, dispatch, store ]);
 }

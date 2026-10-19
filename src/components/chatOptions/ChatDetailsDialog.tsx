@@ -3,7 +3,7 @@ import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { selectAuthDetails } from "../../store/auth/authSlice";
 import { addBlocked, removeBlocked, removeChat, selectBlocked, selectChats, upsertChat } from "../../store/chats/chatsSlice";
 import { chatTitle, fullName, getRecipient, isAdmin, isGroup } from "../../store/chats/chatUtils";
-import ChatAPI from "../../store/ChatAPI";
+import { socket } from "../../api/socket";
 import strings from "../../strings";
 import type { Chat, User } from "../../types";
 import { Dialog } from "../common/Dialog";
@@ -75,7 +75,7 @@ export const ChatDetailsDialog = ({ chatId, onClose }: { chatId: number; onClose
 
             {group &&
                 <GroupSection chat={chat} myId={myId} admin={admin} busy={busy} run={run} changeChat={changeChat}
-                              onLeft={() => { dispatch(removeChat(chat.id)); ChatAPI.unsubscribeChat(chat.id); onClose(); }} />}
+                              onLeft={() => { dispatch(removeChat(chat.id)); socket.unsubscribeChat(chat.id); onClose(); }} />}
 
             {error && <p role="alert" className="dialog__error">{error}</p>}
         </Dialog>

@@ -5,7 +5,7 @@ import "./LoginPage.scss";
 import strings from "../../strings";
 import { Link, useNavigate, Navigate } from "react-router-dom";
 import { selectAuthDetails, setDetails } from "../../store/auth/authSlice";
-import ChatAPI from "../../store/ChatAPI";
+import { getAuthDetails, signIn } from "../../api/session";
 
 const LoginPage = () => {
     const authDetails = useAppSelector(selectAuthDetails);
@@ -21,10 +21,10 @@ const LoginPage = () => {
         if (submitting) return;
         setSubmitting(true);
         setError(null);
-        const result = await ChatAPI.signIn(username, password);
+        const result = await signIn(username, password);
         setSubmitting(false);
         if (result.success) {
-            dispatch(setDetails(ChatAPI.getAuthDetails()));
+            dispatch(setDetails(getAuthDetails()));
             navigate("/");
         } else {
             setError(result.reason === "BAD_CREDENTIALS" ? strings.login.badCredentials : strings.login.unavailable);
