@@ -1,0 +1,166 @@
+@use "../../styles/variables" as *;
+
+.dialog {
+    position: fixed;
+    inset: 0;
+    z-index: 900;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: rgba(0, 0, 0, 0.6);
+
+    &__panel {
+        display: flex;
+        flex-direction: column;
+        width: min(460px, 100%);
+        max-height: min(720px, 100%);
+        background: $surfaceColor;
+        border: 1px solid $borderColor;
+        border-radius: 16px;
+        color: $primaryTextColor;
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+        outline: none;
+
+        @media (max-width: $phoneBreakpoint) {
+            width: 100%;
+            max-height: 100%;
+        }
+    }
+
+    &__header {
+        display: flex;
+        align-items: center;
+        flex: none;
+        gap: 8px;
+        padding: 14px 16px 10px 20px;
+        border-bottom: 1px solid $borderColor;
+    }
+
+    &__title {
+        flex: 1;
+        margin: 0;
+        font-size: 18px;
+        font-weight: 700;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    &__close {
+        width: 36px;
+        height: 36px;
+        border: none;
+        border-radius: 50%;
+        background: none;
+        color: inherit;
+        font-size: 26px;
+        line-height: 1;
+        cursor: pointer;
+
+        &:hover {
+            background: $surfaceRaisedColor;
+        }
+    }
+
+    &__body {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        padding: 16px 20px 20px;
+        scrollbar-width: thin;
+        scrollbar-color: $borderColor transparent;
+    }
+
+    /* shared look of the forms and buttons inside dialogs */
+    &__section {
+        margin-bottom: 22px;
+
+        &:last-child {
+            margin-bottom: 0;
+        }
+
+        h3 {
+            margin: 0 0 10px;
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .6px;
+            color: $mutedTextColor;
+        }
+    }
+
+    &__field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        margin-bottom: 12px;
+        font-size: 14px;
+        color: $mutedTextColor;
+
+        input {
+            width: 100%;
+            color: $primaryTextColor;
+        }
+    }
+
+    &__row {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    &__button {
+        padding: 8px 16px;
+        border: 1px solid $borderColor;
+        border-radius: 10px;
+        background: $surfaceRaisedColor;
+        color: $primaryTextColor;
+        font-size: 14px;
+        cursor: pointer;
+        transition: filter $transitionTime;
+
+        &:hover:not(:disabled) {
+            filter: brightness(1.2);
+        }
+
+        &:disabled {
+            opacity: .5;
+            cursor: default;
+        }
+
+        &--primary {
+            border-color: transparent;
+            background: $primaryColor;
+            color: $black;
+            font-weight: 700;
+        }
+
+        &--danger {
+            color: $dangerColor;
+        }
+
+        &[aria-pressed="true"] {
+            border-color: $primaryColor;
+        }
+    }
+
+    &__error {
+        margin: 8px 0 0;
+        font-size: 14px;
+        color: $dangerColor;
+    }
+
+    &__ok {
+        margin: 8px 0 0;
+        font-size: 14px;
+        color: $onlineColor;
+    }
+
+    &__hint {
+        margin: 6px 0 0;
+        font-size: 13px;
+        color: $mutedTextColor;
+    }
+}

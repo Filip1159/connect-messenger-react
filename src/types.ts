@@ -3,6 +3,8 @@ export interface User {
     username: string;
     name: string;
     surname: string;
+    /* name of the uploaded avatar, null/absent = the default one */
+    avatarKey?: string | null;
 }
 
 /* claims of the JWT issued by the backend */
@@ -52,6 +54,13 @@ export interface Chat {
     hasMore?: boolean;
     /* messages of other users that I haven't seen yet */
     unreadCount?: number;
+    /* group chats have a title and admins; a 1:1 chat is named after the other person */
+    group?: boolean;
+    name?: string | null;
+    adminIds?: number[];
+    /* my own settings: archived chats leave the main list, muted ones don't count as unread */
+    archived?: boolean;
+    muted?: boolean;
 }
 
 export interface Presence {

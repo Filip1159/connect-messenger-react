@@ -26,13 +26,17 @@ const authSlice = createSlice({
         setDetails: (state, action: PayloadAction<AuthDetails>) => {
             state.details = action.payload;
         },
+        /* the profile changed (name, avatar): the token still carries the old values */
+        updateDetails: (state, action: PayloadAction<Partial<AuthDetails>>) => {
+            if (state.details) state.details = { ...state.details, ...action.payload };
+        },
         resetDetails: state => {
             state.details = null;
         }
     }
 });
 
-export const { setDetails, resetDetails } = authSlice.actions;
+export const { setDetails, updateDetails, resetDetails } = authSlice.actions;
 
 export const selectAuthDetails = (state: RootState) => state.auth.details;
 

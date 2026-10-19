@@ -20,6 +20,8 @@ interface MessageProps {
     mine?: boolean;
     /* briefly marks the message the reader jumped to (search) */
     highlighted?: boolean;
+    /* in a group: who wrote this message (shown above the first of a series) */
+    author?: string;
     /* shows another message of the chat (the one this message replies to) */
     onJump?: (messageId: number) => void;
 }
@@ -207,7 +209,7 @@ const useOwnMessageActions = (message: MessageModel) => {
     };
 };
 
-export const Message = React.forwardRef<HTMLDivElement, MessageProps>(function Message({message, modifier, dateFormatter, mine = false, highlighted = false, onJump}, ref) {
+export const Message = React.forwardRef<HTMLDivElement, MessageProps>(function Message({message, modifier, dateFormatter, mine = false, highlighted = false, author, onJump}, ref) {
     const actions = useOwnMessageActions(message);
     const deleted = message.deleted === true;
     const classes = `singleMessage${modifier}${highlighted ? " singleMessage--highlighted" : ""}${message.reactions?.length ? " singleMessage--reacted" : ""}`;
@@ -272,6 +274,7 @@ export const Message = React.forwardRef<HTMLDivElement, MessageProps>(function M
                 <div className="singleMessage__time">
                     {dateFormatter.displayDayIfDifferent() + dateFormatter.currentToHourMinute()}
                 </div>}
+            {author && <div className="singleMessage__author">{author}</div>}
             {body}
         </>
     );

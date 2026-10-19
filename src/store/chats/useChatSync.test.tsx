@@ -23,6 +23,9 @@ vi.mock("../ChatAPI", () => ({
         closeWebsocket: vi.fn(),
         subscribeToChat: vi.fn(),
         watchUser: vi.fn(),
+        unsubscribeChat: vi.fn(),
+        loadProfile: vi.fn(),
+        loadBlocked: vi.fn(),
     }
 }));
 
@@ -47,6 +50,46 @@ describe("useChatSync", () => {
         api.loadAllChats.mockResolvedValue([ makeChat(1, null) ]);
         api.loadMessages.mockResolvedValue([ msg(1, 1, 2), msg(2, 1, 1) ]);
         api.loadPresence.mockResolvedValue([ { userId: 2, online: true, lastSeen: null } ]);
+        api.loadProfile.mockResolvedValue({ id: 1, username: "user1", name: "Fresh", surname: "Name", avatarKey: "a.png" });
+        api.loadBlocked.mockResolvedValue([ { id: 9, username: "user9", name: "Name9", surname: "Surname9" } ]);
+    });
+
+    it("takes my current profile and the people I blocked from the server", async () => {
+        const { store } = await start();
+        await waitFor(() => expect(store.getState().auth.details).toMatchObject({ name: "Fresh", avatarKey: "a.png" }));
+        await waitFor(() => expect(store.getState().chats.blocked.map(u => u.id)).toEqual([ 9 ]));
+    });
+
+    it("loads the messages of a chat that is new to me (a group I was added to) and follows it", async () => {
+        const { store, handlers } = await start();
+        api.loadMessages.mockResolvedValue([ msg(7, 5, 2) ]);
+
+        await handlers.onNewChat(frame({ ...makeChat(5, null, { users: [ 1, 2, 3 ] }), group: true, name: "Team" }));
+
+        const group = store.getState().chats.chats.find(c => c.id === 5)!;
+        expect(group).toMatchObject({ group: true, name: "Team" });
+        expect(group.messages.map(m => m.id)).toEqual([ 7 ]);
+        expect(api.subscribeToChat).toHaveBeenCalledWith(5, expect.anything());
+    });
+
+    it("updates a known chat instead of replacing it (the messages stay)", async () => {
+        const { store, handlers } = await start();
+
+        await handlers.onNewChat(frame({ ...makeChat(1, null, { users: [ 1, 2, 3 ] }), group: true, name: "Renamed", adminIds: [ 1 ] }));
+
+        const chat = store.getState().chats.chats.find(c => c.id === 1)!;
+        expect(chat).toMatchObject({ name: "Renamed", adminIds: [ 1 ] });
+        expect(chat.users).toHaveLength(3);
+        expect(chat.messages.map(m => m.id)).toEqual([ 1, 2 ]);
+    });
+
+    it("drops a chat I was removed from and stops following it", async () => {
+        const { store, handlers } = await start();
+
+        handlers.onChatRemoved(frame({ chatId: 1 }));
+
+        expect(store.getState().chats.chats).toEqual([]);
+        expect(api.unsubscribeChat).toHaveBeenCalledWith(1);
     });
 
     it("loads the newest page of every chat, presence and flags that older messages exist", async () => {
@@ -89,6 +132,16 @@ describe("useChatSync", () => {
         expect(chats.some(c => c.id === 2)).toBe(true);
         expect(api.subscribeToChat).toHaveBeenCalledWith(2, expect.anything());
         expect(api.watchUser).toHaveBeenCalledWith(3);
+    });
+
+    it("drops the chats I was removed from while offline", async () => {
+        const { store, handlers } = await start();
+        api.loadAllChats.mockResolvedValue([ makeChat(2, null, { users: [ 1, 3 ] }) ]);
+
+        await handlers.onReconnect();
+
+        expect(store.getState().chats.chats.map(c => c.id)).toEqual([ 2 ]);
+        expect(api.unsubscribeChat).toHaveBeenCalledWith(1);
     });
 
     it("follows pages while catching up", async () => {

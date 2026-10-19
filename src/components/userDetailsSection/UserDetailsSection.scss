@@ -34,6 +34,21 @@
         text-align: center;
     }
 
+    &__edit {
+        margin-top: 18px;
+        padding: 8px 18px;
+        border: 1px solid $borderColor;
+        border-radius: 10px;
+        background: $surfaceRaisedColor;
+        color: $primaryTextColor;
+        font-size: 14px;
+        cursor: pointer;
+
+        &:hover {
+            filter: brightness(1.2);
+        }
+    }
+
     &__username {
         font-size: 14px;
         margin-top: 4px;

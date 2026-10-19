@@ -28,6 +28,51 @@
         }
     }
 
+    &__actions {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    &__profile {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        height: 40px;
+        padding: 0 12px 0 4px;
+        border: 0;
+        border-radius: 20px;
+        background: none;
+        color: $black;
+        font-family: "Lato", sans-serif;
+        font-style: normal;
+        font-size: 15px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: background $transitionTime;
+
+        &:hover {
+            background: rgba(0, 0, 0, 0.12);
+        }
+
+        @media (max-width: $phoneBreakpoint) {
+            padding: 0 4px;
+        }
+    }
+
+    &__avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+
+    &__profileName {
+        @media (max-width: $phoneBreakpoint) {
+            display: none;
+        }
+    }
+
     &__logout {
         display: flex;
         align-items: center;

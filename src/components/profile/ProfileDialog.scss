@@ -1,0 +1,43 @@
+@use "../../styles/variables" as *;
+
+.profile {
+    &__photo {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+
+    &__avatar {
+        flex: none;
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid $primaryColor;
+    }
+
+    &__blocked {
+        margin: 0;
+        padding: 0;
+
+        li {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 6px 0;
+        }
+    }
+
+    &__blockedAvatar {
+        flex: none;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+
+    &__blockedName {
+        flex: 1;
+        font-size: 15px;
+    }
+}

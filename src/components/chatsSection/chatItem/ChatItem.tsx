@@ -1,10 +1,12 @@
 import { useAppSelector } from "../../../store/hooks";
 import { selectAuthDetails } from "../../../store/auth/authSlice";
 import { selectPresence } from "../../../store/chats/chatsSlice";
-import {getLastMessage, getRecipient} from "../../../store/chats/chatUtils";
+import { chatTitle, getLastMessage, getRecipient, isGroup } from "../../../store/chats/chatUtils";
 import strings from "../../../strings";
 import { activateOnKey } from "../../common/keyboard";
-import Avatar from "../../common/Avatar";
+import { ChatAvatar } from "../../common/ChatAvatar";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faBellSlash } from "@fortawesome/free-solid-svg-icons";
 import type { Chat, Message } from "../../../types";
 import "./ChatItem.scss";
 
@@ -26,14 +28,21 @@ export const ChatItem = ({chat, modifier, onClick}: ChatItemProps) => {
     const authDetails = useAppSelector(selectAuthDetails);
     const presence = useAppSelector(selectPresence);
     const lastMessage = getLastMessage(chat);
+    const group = isGroup(chat);
     const user = getRecipient(chat, authDetails?.id);
     if (!user) return null;
     const unread = chat.unreadCount ?? 0;
-    const online = presence[user.id]?.online;
+    const online = !group && presence[user.id]?.online;
+    const title = chatTitle(chat, authDetails?.id);
+
+    /* who wrote the last message: "Ty", or the first name of the author */
+    const author = lastMessage && (lastMessage.userId === authDetails?.id
+        ? strings.chats.you
+        : chat.users.find(u => u.id === lastMessage.userId)?.name ?? user.name);
 
     return (
         <div
-            className={`chatItem${modifier}${unread > 0 ? " chatItem--unread" : ""}`}
+            className={`chatItem${modifier}${unread > 0 ? " chatItem--unread" : ""}${chat.muted ? " chatItem--muted" : ""}`}
             role="button"
             tabIndex={0}
             aria-current={modifier.includes("--active")}
@@ -41,12 +50,16 @@ export const ChatItem = ({chat, modifier, onClick}: ChatItemProps) => {
             onKeyDown={activateOnKey(onClick)}
         >
             <div className="chatItem__avatar">
-                <Avatar username={user.username} />
+                <ChatAvatar chat={chat} myId={authDetails?.id} />
                 {online && <span className="chatItem__presence" role="img" aria-label={strings.presence.online}/>}
             </div>
             <div className="chatItem__details">
                 <span className="chatItem__details__nameSurname">
-                    <span className="chatItem__details__name">{user.name + " " + user.surname}</span>
+                    <span className="chatItem__details__name">{title}</span>
+                    {chat.muted &&
+                        <span className="chatItem__mutedIcon" role="img" aria-label={strings.chatOptions.muted} title={strings.chatOptions.muted}>
+                            <FontAwesomeIcon icon={faBellSlash} />
+                        </span>}
                     {unread > 0 &&
                         <span className="chatItem__badge" role="status" aria-label={`${unread} ${strings.presence.unread}`}>
                             {unread > 99 ? "99+" : unread}
@@ -54,7 +67,7 @@ export const ChatItem = ({chat, modifier, onClick}: ChatItemProps) => {
                 </span>
                 <span className="chatItem__details__lastMessage">{
                     lastMessage ?
-                        (lastMessage.userId === user.id ? user.name : strings.chats.you) + ": " + preview(lastMessage)
+                        author + ": " + preview(lastMessage)
                         :
                         strings.chats.noMessages
                 }</span>

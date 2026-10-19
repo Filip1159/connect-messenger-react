@@ -1,23 +1,38 @@
 @use "../../../styles/variables" as *;
 @use "../../../styles/mixins" as *;
 
-.srOnly {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip: rect(0 0 0 0);
-    white-space: nowrap;
-}
-
 .search {
     flex: none;
     padding: 12px;
     border-bottom: 1px solid $borderColor;
     color: $primaryTextColor;
 
+    &__row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
     &__field {
         position: relative;
+        flex: 1;
+        min-width: 0;
+    }
+
+    &__newGroup {
+        flex: none;
+        width: 40px;
+        height: 40px;
+        border: none;
+        border-radius: 50%;
+        background: $surfaceRaisedColor;
+        color: $primaryTextColor;
+        font-size: 16px;
+        cursor: pointer;
+
+        &:hover {
+            filter: brightness(1.25);
+        }
     }
 
     &__icon {

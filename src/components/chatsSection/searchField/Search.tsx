@@ -1,81 +1,66 @@
-import {useEffect, useRef, useState} from "react";
-import type {ChangeEvent} from "react";
-import type {User} from "../../../types";
+import { useState } from "react";
+import type { User } from "../../../types";
 import "./Search.scss";
 import ChatAPI from "../../../store/ChatAPI";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faSearch } from "@fortawesome/free-solid-svg-icons";
-import { useAppSelector } from "../../../store/hooks";
-import {selectChats} from "../../../store/chats/chatsSlice";
+import { faSearch, faUserGroup } from "@fortawesome/free-solid-svg-icons";
+import { useAppDispatch } from "../../../store/hooks";
+import { setActive, upsertChat } from "../../../store/chats/chatsSlice";
 import strings from "../../../strings";
 import {activateOnKey} from "../../common/keyboard";
 import Avatar from "../../common/Avatar";
-import {participatesInChat} from "../../../store/chats/chatUtils";
+import { useUserSearch } from "../../common/useUserSearch";
+import { NewGroupDialog } from "../../newGroup/NewGroupDialog";
 
 export const Search = () => {
-    const [ usersQueryResult, setUsersQueryResult ] = useState<User[]>([]);
-    const chats = useAppSelector(selectChats);
+    const dispatch = useAppDispatch();
+    const [ text, setText ] = useState("");
+    const [ groupOpen, setGroupOpen ] = useState(false);
+    const { users, query } = useUserSearch(text);
 
-    const controllerRef = useRef<AbortController | null>(null);
-    const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
-
-    useEffect(() => () => {
-        clearTimeout(timerRef.current);
-        controllerRef.current?.abort();
-    }, []);
-
-    const handleInput = (e: ChangeEvent<HTMLInputElement>) => {
-        const query = e.target.value.trim();
-        clearTimeout(timerRef.current);
-        controllerRef.current?.abort();  // drop responses of outdated queries
-
-        if (query === "") {
-            setUsersQueryResult([]);
-            return;
-        }
-
-        timerRef.current = setTimeout(() => {
-            const controller = new AbortController();
-            controllerRef.current = controller;
-            ChatAPI.searchUsersByQuery(query, controller.signal)
-                .then(users => {
-                    setUsersQueryResult(users.filter(user => !chats.some(chat => participatesInChat(chat, user.id))))
-                })
-                .catch(err => {
-                    if (!controller.signal.aborted) console.error("User search failed:", err);
-                });
-        }, 300);
-    }
-
-    const createNewChat = (recipientId: number) => {
-        setUsersQueryResult([])
-        ChatAPI.createChat(recipientId).catch(e => console.error("Failed to create chat:", e));
+    /* an existing chat with the person is opened instead of a second one */
+    const openChat = (user: User) => {
+        setText("");
+        ChatAPI.createChat([ user.id ])
+            .then(chat => {
+                dispatch(upsertChat(chat));
+                dispatch(setActive(chat.id));
+            })
+            .catch(e => console.error("Failed to create chat:", e));
     }
 
     return (
         <div className="search">
             <label htmlFor="user-search" className="srOnly">{strings.chats.search}</label>
-            <div className="search__field">
-                <FontAwesomeIcon icon={faSearch} className="search__icon" />
-                <input id="user-search" type="text" className="search__queryInput" autoComplete="off"
-                       placeholder={strings.chats.searchPlaceholder} onChange={handleInput}/>
+            <div className="search__row">
+                <div className="search__field">
+                    <FontAwesomeIcon icon={faSearch} className="search__icon" />
+                    <input id="user-search" type="text" className="search__queryInput" autoComplete="off"
+                           placeholder={strings.chats.searchPlaceholder} value={text} onChange={e => setText(e.target.value)}/>
+                </div>
+                <button type="button" className="search__newGroup" aria-label={strings.group.newGroup}
+                        title={strings.group.newGroup} onClick={() => setGroupOpen(true)}>
+                    <FontAwesomeIcon icon={faUserGroup} />
+                </button>
             </div>
-            <div className="search__queryResult">
-                <ul>{
-                    usersQueryResult.map(u => (
-                        <li
-                            key={u.username}
-                            role="button"
-                            tabIndex={0}
-                            onClick={() => createNewChat(u.id)}
-                            onKeyDown={activateOnKey(() => createNewChat(u.id))}
-                        >
-                            <Avatar username={u.username} alt="" className="search__avatar"/>
-                            {`${u.name} ${u.surname}`}
-                        </li>
-                    ))
-                }</ul>
-            </div>
+            {query !== "" &&
+                <div className="search__queryResult">
+                    <ul>{
+                        users.map(u => (
+                            <li
+                                key={u.username}
+                                role="button"
+                                tabIndex={0}
+                                onClick={() => openChat(u)}
+                                onKeyDown={activateOnKey(() => openChat(u))}
+                            >
+                                <Avatar user={u} alt="" className="search__avatar"/>
+                                {`${u.name} ${u.surname}`}
+                            </li>
+                        ))
+                    }</ul>
+                </div>}
+            {groupOpen && <NewGroupDialog onClose={() => setGroupOpen(false)} />}
         </div>
     );
 }

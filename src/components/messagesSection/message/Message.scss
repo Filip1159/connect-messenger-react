@@ -39,6 +39,14 @@
         transition: opacity $transitionTime linear 1s;  /* property duration type delay */
     }
 
+    &__author {
+        align-self: flex-start;
+        margin: 8px 0 -4px 14px;
+        font-size: 12px;
+        font-weight: 700;
+        color: $mutedTextColor;
+    }
+
     &__tooltip {
         background: $surfaceRaisedColor;
         color: $whiteTextColor;

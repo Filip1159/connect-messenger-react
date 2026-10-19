@@ -189,16 +189,31 @@ test.describe("chat", () => {
         expect(backend.posted.chats[0]).toEqual({ userIds: [ME.id, 3] });
     });
 
-    test("search hides users that already have a chat", async ({ page }) => {
-        const backend = await mockBackend(page);
+    test("choosing somebody who already has a chat opens that chat instead of a second one", async ({ page }) => {
+        const backend = await mockBackend(page, { chats: [ annaChat(), { ...annaChat(), id: 11, users: [ ME, PIOTR ], messages: [] } ] });
+        await page.goto("/");
+        await expect(page.getByRole("button", { name: /Anna Nowak/ })).toBeVisible(); // chats are loaded
+        await page.getByRole("button", { name: /Piotr Zielinski/ }).click();  // another chat is open
+
+        await page.getByLabel("Szukaj:").fill("anna");
+        await page.locator(".search__queryResult").getByText("Anna Nowak").click();
+
+        await expect.poll(() => backend.posted.chats.length).toBe(1);
+        await expect(page.getByRole("button", { name: /Anna Nowak/ })).toHaveCount(1);
+        await expect(page.getByRole("button", { name: /Anna Nowak/ })).toHaveAttribute("aria-current", "true");
+        await expect(page.getByText("Hi Jan, are we still on for today?")).toBeVisible();
+        await expect(page.getByLabel("Szukaj:")).toHaveValue("");
+    });
+
+    test("opens the chat that was just started", async ({ page }) => {
+        await mockBackend(page);
         await page.goto("/");
 
-        await expect(page.getByRole("button", { name: /Anna Nowak/ })).toBeVisible(); // chats are loaded
-        await page.getByLabel("Szukaj:").fill("n");
+        await page.getByLabel("Szukaj:").fill("piotr");
+        await page.getByRole("button", { name: "Piotr Zielinski" }).click();
 
-        await expect.poll(() => backend.requests.some(r => r.startsWith("GET /user/"))).toBe(true);
-        await expect(page.getByRole("button", { name: "Piotr Zielinski" })).toBeVisible();
-        await expect(page.locator(".search__queryResult").getByText("Anna Nowak")).toHaveCount(0);
+        await expect(page.getByRole("button", { name: /Piotr Zielinski/ })).toHaveAttribute("aria-current", "true");
+        await expect(page.locator(".conversationStatus__name")).toHaveText("Piotr Zielinski");
     });
 
     test("debounces the search requests", async ({ page }) => {

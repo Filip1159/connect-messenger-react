@@ -3,7 +3,7 @@ import type { FormEvent } from "react";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import "./LoginPage.scss";
 import strings from "../../strings";
-import { useNavigate, Navigate } from "react-router-dom";
+import { Link, useNavigate, Navigate } from "react-router-dom";
 import { selectAuthDetails, setDetails } from "../../store/auth/authSlice";
 import ChatAPI from "../../store/ChatAPI";
 
@@ -48,6 +48,7 @@ const LoginPage = () => {
                                value={password} onChange={e => setPassword(e.target.value)}/>
                         <input type="submit" className="loginPage__input" disabled={submitting}
                                value={submitting ? strings.login.submitting : strings.login.submit} />
+                        <Link to="/register" className="loginPage__link">{strings.register.noAccount} {strings.register.link}</Link>
                     </form>
                     {error && <span role="alert" className="loginPage__authFailed">{error}</span>}
                 </div>

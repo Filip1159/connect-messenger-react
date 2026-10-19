@@ -46,7 +46,10 @@ export interface ChatCallbacks {
 
 /* connection level events */
 export interface SocketHandlers {
+    /* a chat of mine was created or changed (renamed, members changed) */
     onNewChat: MessageCallback;
+    /* I'm no longer in this chat */
+    onChatRemoved: MessageCallback;
     onPresence: MessageCallback;
     /* the connection was re-established after a drop: events may have been missed */
     onReconnect: () => void;
@@ -145,6 +148,7 @@ class ChatAPI {
                 this.subscriptions.clear();
                 this.presenceSubscriptions.clear();
                 client.subscribe(`/topic/new-chats/${this.getAuthDetails().id}`, message => this.handlers?.onNewChat(message));
+                client.subscribe(`/topic/removed-chats/${this.getAuthDetails().id}`, message => this.handlers?.onChatRemoved(message));
                 this.chatCallbacks.forEach((callbacks, chatId) => this.subscribe(chatId, callbacks));
                 this.watchedUsers.forEach(userId => this.subscribePresence(userId));
                 if (this.connectedOnce) this.handlers?.onReconnect();
@@ -177,6 +181,13 @@ class ChatAPI {
             this.stompClient.subscribe(`/topic/status/${chatId}`, onStatus),
             this.stompClient.subscribe(`/topic/typing/${chatId}`, onTyping),
         ]);
+    }
+
+    /* stops following a chat I'm no longer in */
+    static unsubscribeChat(chatId: number) {
+        this.chatCallbacks.delete(chatId);
+        this.subscriptions.get(chatId)?.forEach(s => s.unsubscribe());
+        this.subscriptions.delete(chatId);
     }
 
     private static subscribePresence(userId: number) {
@@ -300,11 +311,111 @@ class ChatAPI {
         return res.data;
     }
 
-    static async createChat(recipientId: number): Promise<Chat> {
+    /* a 1:1 chat (an existing one is returned if there is one) or, with a name or more people, a group */
+    static async createChat(recipientIds: number[], name?: string): Promise<Chat> {
         const res = await api.post('/chats', {
-            userIds: [this.getAuthDetails().id, recipientId]
+            userIds: [this.getAuthDetails().id, ...recipientIds],
+            ...(name ? { name } : {})
         });
         return res.data;
+    }
+
+    static async loadChat(chatId: number): Promise<Chat> {
+        this.getAuthDetails();
+        const res = await api.get(`/chats/chat/${chatId}`);
+        return res.data;
+    }
+
+    /* archive / mute: my own settings of the chat */
+    static async updateChatSettings(chatId: number, settings: { archived?: boolean; muted?: boolean }): Promise<Chat> {
+        this.getAuthDetails();
+        const res = await api.patch(`/chats/chat/${chatId}/settings`, settings);
+        return res.data;
+    }
+
+    static async renameChat(chatId: number, name: string): Promise<Chat> {
+        this.getAuthDetails();
+        const res = await api.patch(`/chats/chat/${chatId}`, { name });
+        return res.data;
+    }
+
+    static async addMembers(chatId: number, userIds: number[]): Promise<Chat> {
+        this.getAuthDetails();
+        const res = await api.post(`/chats/chat/${chatId}/members`, { userIds });
+        return res.data;
+    }
+
+    /* an admin removes a member; removing myself leaves the group */
+    static async removeMember(chatId: number, userId: number): Promise<void> {
+        this.getAuthDetails();
+        await api.delete(`/chats/chat/${chatId}/members/${userId}`);
+    }
+
+    static async setAdmin(chatId: number, userId: number, admin: boolean): Promise<Chat> {
+        this.getAuthDetails();
+        const res = admin
+            ? await api.put(`/chats/chat/${chatId}/admins/${userId}`)
+            : await api.delete(`/chats/chat/${chatId}/admins/${userId}`);
+        return res.data;
+    }
+
+    /* creates the account; the caller signs in afterwards */
+    static async register(account: { username: string; name: string; surname: string; password: string }): Promise<User> {
+        const res = await api.post("/users", account);
+        return res.data;
+    }
+
+    static async loadProfile(): Promise<User> {
+        this.getAuthDetails();
+        const res = await api.get("/users/me");
+        return res.data;
+    }
+
+    static async updateProfile(name: string, surname: string): Promise<User> {
+        this.getAuthDetails();
+        const res = await api.patch("/users/me", { name, surname });
+        return res.data;
+    }
+
+    static async changePassword(currentPassword: string, newPassword: string): Promise<void> {
+        this.getAuthDetails();
+        await api.put("/users/me/password", { currentPassword, newPassword });
+    }
+
+    static async uploadAvatar(file: File): Promise<User> {
+        this.getAuthDetails();
+        const formData = new FormData();
+        formData.append("file", file);
+        const res = await api.put("/users/me/avatar", formData);
+        return res.data;
+    }
+
+    static async removeAvatar(): Promise<User> {
+        this.getAuthDetails();
+        const res = await api.delete("/users/me/avatar");
+        return res.data;
+    }
+
+    static async loadAvatar(userId: number, signal?: AbortSignal): Promise<Blob> {
+        this.getAuthDetails();
+        const res = await api.get(`/users/${userId}/avatar`, { responseType: "blob", signal });
+        return res.data;
+    }
+
+    static async loadBlocked(): Promise<User[]> {
+        this.getAuthDetails();
+        const res = await api.get("/users/blocked");
+        return res.data;
+    }
+
+    static async blockUser(userId: number): Promise<void> {
+        this.getAuthDetails();
+        await api.put(`/users/${userId}/block`);
+    }
+
+    static async unblockUser(userId: number): Promise<void> {
+        this.getAuthDetails();
+        await api.delete(`/users/${userId}/block`);
     }
 
     /* the image bytes; the caller turns them into an object URL */

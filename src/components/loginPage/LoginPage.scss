@@ -68,6 +68,19 @@
         }
     }
 
+    &__problem {
+        margin-top: 4px;
+        font-size: 13px;
+        color: $dangerColor;
+    }
+
+    &__link {
+        margin-top: 18px;
+        font-size: 14px;
+        text-align: center;
+        color: $primaryColor;
+    }
+
     &__authFailed {
         font-size: 14px;
         color: $dangerColor;

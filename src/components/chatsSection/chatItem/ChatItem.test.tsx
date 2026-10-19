@@ -39,6 +39,24 @@ describe("ChatItem", () => {
         expect(screen.queryByRole("status")).not.toBeInTheDocument();
     });
 
+    it("shows the title of a group and who wrote the last message", () => {
+        const group = { ...makeChat(1, "2021-01-01T10:00:00", { users: [ 2, 1, 3 ] }), group: true, name: "Team" };
+        renderItem(group);
+        expect(screen.getByText("Team")).toBeInTheDocument();
+        expect(screen.getByText("Name2: hi")).toBeInTheDocument();
+        expect(screen.queryByRole("img", { name: "online" })).not.toBeInTheDocument();
+    });
+
+    it("lists the members of a group without a name", () => {
+        renderItem({ ...makeChat(1, null, { users: [ 1, 2, 3 ] }), group: true });
+        expect(screen.getByText("Name2, Name3")).toBeInTheDocument();
+    });
+
+    it("marks a muted chat", () => {
+        renderItem({ ...makeChat(1, "2021-01-01T10:00:00"), muted: true, unreadCount: 2 });
+        expect(screen.getByTitle("Muted")).toBeInTheDocument();
+    });
+
     it("can be activated with the keyboard", async () => {
         const onClick = vi.fn();
         renderItem(makeChat(1, null), onClick);

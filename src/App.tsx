@@ -3,6 +3,7 @@ import Header from "./components/header/Header";
 import {ChatsSection} from "./components/chatsSection/ChatsSection";
 import {MessagesSection} from "./components/messagesSection/MessagesSection";
 import LoginPage from "./components/loginPage/LoginPage";
+import RegisterPage from "./components/registerPage/RegisterPage";
 import useSessionExpiry from "./store/auth/useSessionExpiry";
 import {UserDetailsSection} from "./components/userDetailsSection/UserDetailsSection";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -22,6 +23,7 @@ const App = () => {
             <Header/>
             <Routes>
                 <Route path="/login" element={<LoginPage/>}/>
+                <Route path="/register" element={<RegisterPage/>}/>
                 <Route path="/" element={<ProtectedRoute>
                     <div className={`app__container app__container--${listOpen ? "list" : "chat"}`}>
                         <ChatsSection/>

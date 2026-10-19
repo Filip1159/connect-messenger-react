@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import reducer, {
     addChat, addMessage, initialChatState, markRead, outboxAdd, outboxRemove, outboxStatus, prependMessages, setActive, setReplyTo,
-    setChats, setPresence, setTyping, syncChats, updatePresence, updateStatus
+    setChats, setPresence, setTyping, syncChats, updatePresence, updateStatus, upsertChat, removeChat, updateUser,
+    setBlocked, addBlocked, removeBlocked, selectTotalUnread
 } from "./chatsSlice";
 import { resetDetails } from "../auth/authSlice";
 import type { Message } from "../../types";
@@ -143,6 +144,76 @@ describe("chatsSlice", () => {
         expect(reducer(state, addChat(makeChat(1, null)))).toBe(state);
         state = reducer(state, addChat(makeChat(3, null)));
         expect(state.chats[0].id).toBe(3);
+    });
+
+    it("takes the details of a known chat but keeps its messages and unread count", () => {
+        let state = reducer(withChats(), addMessage(message(30, 1, "2021-01-03T00:00:00", "x"), true));
+        const renamed = { ...makeChat(1, null, { users: [ 1, 2, 3 ] }), group: true, name: "Team", adminIds: [ 1 ], archived: true, muted: true };
+        state = reducer(state, upsertChat(renamed));
+        const chat = state.chats.find(c => c.id === 1)!;
+        expect(chat).toMatchObject({ group: true, name: "Team", adminIds: [ 1 ], archived: true, muted: true, unreadCount: 1 });
+        expect(chat.users).toHaveLength(3);
+        expect(chat.messages.map(m => m.id)).toEqual([ 10, 30 ]);
+    });
+
+    it("adds a chat that upsert doesn't know", () => {
+        const state = reducer(withChats(), upsertChat(makeChat(3, null)));
+        expect(state.chats.map(c => c.id)).toContain(3);
+    });
+
+    it("removes a chat and moves to the next one when it was open", () => {
+        let state = reducer(withChats(), setActive(2));
+        state = reducer(state, setReplyTo(20));
+        state = reducer(state, removeChat(2));
+        expect(state.chats.map(c => c.id)).toEqual([ 1 ]);
+        expect(state).toMatchObject({ activeId: 1, replyTo: null, listOpen: true });
+        expect(reducer(state, removeChat(1)).activeId).toBeNull();
+    });
+
+    it("opens a chat that isn't archived first", () => {
+        const state = reducer(initialChatState, setChats([
+            { ...makeChat(1, null), archived: true },
+            makeChat(2, "2021-01-01T10:00:00")
+        ]));
+        expect(state.activeId).toBe(2);
+    });
+
+    it("prefers a chat that isn't archived after the open one was removed", () => {
+        let state = withChats();  // 2 is newest, then 1
+        state = reducer(state, upsertChat({ ...makeChat(1, null), archived: true }));
+        state = reducer(state, addChat(makeChat(3, "2020-01-01T00:00:00")));
+        state = reducer(state, setActive(2));
+        state = reducer(state, removeChat(2));
+        expect(state.activeId).toBe(3);
+    });
+
+    it("keeps the group details when chats are synced after a reconnect", () => {
+        const state = reducer(withChats(), syncChats([ { ...makeChat(1, null), group: true, name: "Crew", muted: true, unreadCount: 4 } ]));
+        expect(state.chats.find(c => c.id === 1)).toMatchObject({ group: true, name: "Crew", muted: true, unreadCount: 4 });
+    });
+
+    it("shows a changed profile in every chat of that person", () => {
+        const state = reducer(withChats(), updateUser({ id: 2, username: "user2", name: "New", surname: "Name", avatarKey: "k.png" }));
+        state.chats.forEach(c => expect(c.users.find(u => u.id === 2)).toMatchObject({ name: "New", avatarKey: "k.png" }));
+        expect(state.chats[0].users.find(u => u.id === 1)!.name).toBe("Name1");
+    });
+
+    it("keeps the list of blocked people", () => {
+        const anna = { id: 5, username: "anna", name: "Anna", surname: "N" };
+        let state = reducer(withChats(), setBlocked([ anna ]));
+        state = reducer(state, addBlocked(anna));
+        expect(state.blocked).toEqual([ anna ]);
+        state = reducer(state, removeBlocked(5));
+        expect(state.blocked).toEqual([]);
+    });
+
+    it("doesn't count muted chats as unread", () => {
+        let state = reducer(withChats(), addMessage(message(30, 1, "2021-01-03T00:00:00", "x"), true));
+        state = reducer(state, addMessage(message(31, 2, "2021-01-03T00:00:00", "y"), true));
+        const total = (s: typeof state) => selectTotalUnread({ chats: s, auth: { details: null } });
+        expect(total(state)).toBe(2);
+        state = reducer(state, upsertChat({ ...makeChat(1, null), muted: true }));
+        expect(total(state)).toBe(1);
     });
 
     it("drops all chats when the user signs out", () => {

@@ -1,6 +1,6 @@
 import { createSlice } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
-import type { Chat, ChatStatus, Message, OutboxItem, Presence } from "../../types";
+import type { Chat, ChatStatus, Message, OutboxItem, Presence, User } from "../../types";
 import type { RootState } from "../index";
 import { sortChats } from "./chatUtils";
 import { resetDetails } from "../auth/authSlice";
@@ -13,9 +13,15 @@ export interface ChatsState {
     outbox: OutboxItem[]; // my messages waiting for the server
     replyTo: number | null; // id of the message I'm answering in the active chat
     listOpen: boolean; // narrow screens show either the chat list or the conversation
+    blocked: User[]; // people I blocked
 }
 
-export const initialChatState: ChatsState = { chats: [], activeId: null, presence: {}, typing: {}, outbox: [], replyTo: null, listOpen: true };
+export const initialChatState: ChatsState = {
+    chats: [], activeId: null, presence: {}, typing: {}, outbox: [], replyTo: null, listOpen: true, blocked: []
+};
+
+/* what the server decides about a chat (not the messages, which the client keeps, nor the live unread count) */
+const CHAT_DETAILS = [ "users", "status", "group", "name", "adminIds", "archived", "muted" ] as const;
 
 const chatsSlice = createSlice({
     name: "chats",
@@ -23,7 +29,7 @@ const chatsSlice = createSlice({
     reducers: {
         setChats: (state, action: PayloadAction<Chat[]>) => {
             const chats = sortChats(action.payload);
-            if (!chats.some(c => c.id === state.activeId)) state.activeId = chats[0]?.id ?? null;
+            if (!chats.some(c => c.id === state.activeId)) state.activeId = (chats.find(c => !c.archived) ?? chats[0])?.id ?? null;
             state.chats = chats;
         },
         setActive: (state, action: PayloadAction<number>) => {
@@ -41,6 +47,42 @@ const chatsSlice = createSlice({
             if (state.chats.some(c => c.id === action.payload.id)) return;
             state.chats = sortChats([ ...state.chats, action.payload ]);
             state.activeId ??= action.payload.id;
+        },
+        /* a known chat takes the new details (title, members, admins, my settings), an unknown one is added */
+        upsertChat: (state, action: PayloadAction<Chat>) => {
+            const fresh = action.payload;
+            const chat = state.chats.find(c => c.id === fresh.id);
+            if (!chat) {
+                state.chats = sortChats([ ...state.chats, fresh ]);
+                state.activeId ??= fresh.id;
+                return;
+            }
+            Object.assign(chat, Object.fromEntries(CHAT_DETAILS.map(key => [ key, fresh[key] ])));
+        },
+        /* I left the chat or was removed from it */
+        removeChat: (state, action: PayloadAction<number>) => {
+            state.chats = state.chats.filter(c => c.id !== action.payload);
+            if (state.activeId === action.payload) {
+                state.activeId = (state.chats.find(c => !c.archived) ?? state.chats[0])?.id ?? null;
+                state.replyTo = null;
+                state.listOpen = true;
+            }
+        },
+        /* a person's profile changed (name, avatar): every chat that shows them takes it */
+        updateUser: (state, action: PayloadAction<User>) => {
+            state.chats.forEach(chat => {
+                const index = chat.users.findIndex(u => u.id === action.payload.id);
+                if (index !== -1) chat.users[index] = { ...chat.users[index], ...action.payload };
+            });
+        },
+        setBlocked: (state, action: PayloadAction<User[]>) => {
+            state.blocked = action.payload;
+        },
+        addBlocked: (state, action: PayloadAction<User>) => {
+            if (!state.blocked.some(u => u.id === action.payload.id)) state.blocked.push(action.payload);
+        },
+        removeBlocked: (state, action: PayloadAction<number>) => {
+            state.blocked = state.blocked.filter(u => u.id !== action.payload);
         },
         /* `incoming` marks a live message of somebody else: it counts as unread until I see it */
         addMessage: {
@@ -74,8 +116,7 @@ const chatsSlice = createSlice({
             action.payload.forEach(fresh => {
                 const chat = state.chats.find(c => c.id === fresh.id);
                 if (!chat) return;
-                chat.users = fresh.users;
-                chat.status = fresh.status;
+                CHAT_DETAILS.forEach(key => Object.assign(chat, { [key]: fresh[key] }));
                 chat.unreadCount = fresh.unreadCount ?? 0;
             });
         },
@@ -125,7 +166,7 @@ const chatsSlice = createSlice({
 });
 
 export const {
-    setChats, setActive, showChatList, setReplyTo, addChat, addMessage, prependMessages, updateStatus, markRead, syncChats,
+    setChats, setActive, showChatList, setReplyTo, addChat, upsertChat, removeChat, updateUser, setBlocked, addBlocked, removeBlocked, addMessage, prependMessages, updateStatus, markRead, syncChats,
     setPresence, updatePresence, setTyping, outboxAdd, outboxStatus, outboxRemove
 } = chatsSlice.actions;
 
@@ -133,8 +174,10 @@ export const selectChats = (state: RootState) => state.chats.chats;
 export const selectPresence = (state: RootState) => state.chats.presence;
 export const selectTyping = (state: RootState) => state.chats.typing;
 export const selectOutbox = (state: RootState) => state.chats.outbox;
+/* muted chats don't count */
 export const selectTotalUnread = (state: RootState) =>
-    state.chats.chats.reduce((sum, c) => sum + (c.unreadCount ?? 0), 0);
+    state.chats.chats.reduce((sum, c) => sum + (c.muted ? 0 : (c.unreadCount ?? 0)), 0);
+export const selectBlocked = (state: RootState) => state.chats.blocked;
 /* the message I'm answering, if it is still in the active chat */
 export const selectReplyTarget = (state: RootState): Message | null => {
     const chat = state.chats.chats.find(c => c.id === state.chats.activeId);

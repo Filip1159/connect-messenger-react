@@ -2,7 +2,8 @@ import { useLayoutEffect, useRef, useState } from "react";
 import type { ClipboardEvent, DragEvent, FormEvent, KeyboardEvent } from "react";
 import { useAppDispatch, useAppSelector } from "../../../store/hooks";
 import { sendMessage } from "../../../store/chats/outbox";
-import { selectActiveChat, selectReplyTarget, setReplyTo } from "../../../store/chats/chatsSlice";
+import { removeBlocked, selectActiveChat, selectBlocked, selectReplyTarget, setReplyTo } from "../../../store/chats/chatsSlice";
+import { getRecipient, isGroup } from "../../../store/chats/chatUtils";
 import "./NewMessageInput.scss";
 import strings from "../../../strings";
 import ChatAPI from "../../../store/ChatAPI";
@@ -39,6 +40,7 @@ const NewMessageInput = () => {
     const activeChat = useAppSelector(selectActiveChat);
     const replyTarget = useAppSelector(selectReplyTarget);
     const authDetails = useAppSelector(selectAuthDetails);
+    const blocked = useAppSelector(selectBlocked);
     const replyAuthor = replyTarget && (replyTarget.userId === authDetails?.id
         ? strings.chats.you
         : activeChat?.users.find(u => u.id === replyTarget.userId)?.name ?? "");
@@ -136,6 +138,23 @@ const NewMessageInput = () => {
         const file = e.dataTransfer.files[0];
         if (file) attach(file);
     };
+
+    /* in a 1:1 chat with somebody I blocked there is nobody to write to */
+    const blockedPerson = activeChat && !isGroup(activeChat)
+        ? blocked.find(u => u.id === getRecipient(activeChat, authDetails?.id)?.id)
+        : undefined;
+    if (blockedPerson) {
+        return (
+            <div className="newMessageInput newMessageInput--blocked" role="status">
+                <span>{strings.chatOptions.blockedInput}</span>
+                <button type="button" onClick={() => {
+                    ChatAPI.unblockUser(blockedPerson.id)
+                        .then(() => dispatch(removeBlocked(blockedPerson.id)))
+                        .catch(e => console.error("Failed to unblock:", e));
+                }}>{strings.chatOptions.unblock}</button>
+            </div>
+        );
+    }
 
     return (
         <form

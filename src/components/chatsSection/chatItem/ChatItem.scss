@@ -92,6 +92,16 @@
         font-weight: 700;
     }
 
+    &__mutedIcon {
+        flex: none;
+        font-size: 12px;
+        color: $mutedTextColor;
+    }
+
+    &--muted &__badge {
+        background: $borderColor;
+    }
+
     &--unread &__details__lastMessage {
         font-weight: 700;
         color: $primaryTextColor;

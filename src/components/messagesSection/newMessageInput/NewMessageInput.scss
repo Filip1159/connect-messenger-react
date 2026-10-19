@@ -11,6 +11,25 @@
     border-top: 1px solid $borderColor;
     padding-bottom: env(safe-area-inset-bottom);
 
+    &--blocked {
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        padding: 14px 12px;
+        color: $mutedTextColor;
+        font-size: 14px;
+
+        button {
+            padding: 6px 14px;
+            border: 1px solid $borderColor;
+            border-radius: 10px;
+            background: $surfaceRaisedColor;
+            color: $primaryTextColor;
+            cursor: pointer;
+        }
+    }
+
     &--dragging {
         outline: 2px dashed $primaryColor;
         outline-offset: -4px;

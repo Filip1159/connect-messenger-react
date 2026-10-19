@@ -19,7 +19,7 @@ const SeenAvatar = ({ bottom, opacity }: SeenAvatarProps) => {
 
     return (
         <Avatar
-            username={recipient.username}
+            user={recipient}
             className="seenAvatar"
             alt={strings.avatar.seen}
             style={{

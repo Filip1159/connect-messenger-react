@@ -34,6 +34,10 @@ export const annaChat = (): Chat => ({
 export interface Backend {
     chats: Chat[];
     users: User[];
+    /* the people the signed-in user (ME) blocked */
+    blocked: User[];
+    /* JSON bodies of the account / group endpoints, as { "METHOD /path": [body, ...] } */
+    bodies: Record<string, unknown[]>;
     /* every request the app made to a mocked endpoint, as "METHOD /path" */
     requests: string[];
     edited: { id: number; textContent: string }[];
@@ -51,7 +55,13 @@ export interface BackendOptions {
     /* the first N message posts fail with a 500 */
     failMessagePosts?: number;
     presence?: { userId: number; online: boolean; lastSeen: string | null }[];
+    blocked?: User[];
+    /* the avatar of ME: an uploaded one is served as a tiny PNG */
+    avatarKey?: string;
 }
+
+/* 1x1 transparent PNG */
+const PNG = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGNgYGD4DwABBAEAHnOcQAAAAABJRU5ErkJggg==", "base64");
 
 const json = (route: Route, data: unknown, status = 200) =>
     route.fulfill({ status, contentType: "application/json", body: JSON.stringify(data) });
@@ -61,6 +71,8 @@ export const mockBackend = async (page: Page, options: BackendOptions = {}): Pro
     const backend: Backend = {
         chats: options.chats ?? [annaChat()],
         users: options.users ?? [ME, ANNA, PIOTR],
+        blocked: options.blocked ?? [],
+        bodies: {},
         requests: [],
         edited: [],
         deleted: [],
@@ -70,6 +82,15 @@ export const mockBackend = async (page: Page, options: BackendOptions = {}): Pro
     const password = options.password ?? "secret";
     let failuresLeft = options.failMessagePosts ?? 0;
     let nextMessageId = 1000;
+    let nextChatId = 20;
+    let nextUserId = 100;
+    let currentPassword = password;
+    let avatarKey = options.avatarKey ?? null;
+    let signedInId = ME.id;  // whoever logged in last; a token injected by signInAs() is ME
+    const me = () => ({ ...backend.users.find(u => u.id === signedInId)!, avatarKey });
+    const record = (key: string, body: unknown) => (backend.bodies[key] ??= []).push(body);
+    const chatOf = (id: number) => backend.chats.find(c => c.id === id);
+    const withFlags = (chat: Chat): Chat => ({ adminIds: [], group: false, name: null, archived: false, muted: false, ...chat });
 
     await page.route("**/api/**", async route => {
         const request = route.request();
@@ -84,7 +105,8 @@ export const mockBackend = async (page: Page, options: BackendOptions = {}): Pro
             const { username, password: given } = request.postDataJSON();
             const user = backend.users.find(u => u.username === username);
             if (options.loginStatus && options.loginStatus !== 200) return route.fulfill({ status: options.loginStatus });
-            if (!user || given !== password) return route.fulfill({ status: 403 });
+            if (!user || given !== currentPassword) return route.fulfill({ status: 403 });
+            signedInId = user.id;
             return route.fulfill({ status: 200, headers: { authentication: makeToken(user) }, body: "" });
         }
 
@@ -139,27 +161,126 @@ export const mockBackend = async (page: Page, options: BackendOptions = {}): Pro
             return json(route, message);
         }
 
+        /* ---- accounts */
+        if (method === "POST" && path === "/users") {
+            const body = request.postDataJSON() as { username: string; name: string; surname: string; password: string };
+            record("POST /users", body);
+            if (backend.users.some(u => u.username.toLowerCase() === body.username.toLowerCase())) {
+                return json(route, { status: 409, error: "Conflict", message: "This username is taken" }, 409);
+            }
+            const user: User = { id: nextUserId++, username: body.username, name: body.name, surname: body.surname };
+            backend.users.push(user);
+            currentPassword = body.password;
+            return json(route, user, 201);
+        }
+        if (method === "GET" && path === "/users/me") return json(route, me());
+        if (method === "PATCH" && path === "/users/me") {
+            const body = request.postDataJSON() as { name: string; surname: string };
+            record("PATCH /users/me", body);
+            Object.assign(backend.users.find(u => u.id === signedInId)!, body);
+            return json(route, me());
+        }
+        if (method === "PUT" && path === "/users/me/password") {
+            const body = request.postDataJSON() as { currentPassword: string; newPassword: string };
+            record("PUT /users/me/password", body);
+            if (body.currentPassword !== currentPassword) {
+                return json(route, { status: 403, error: "Forbidden", message: "The current password is wrong" }, 403);
+            }
+            currentPassword = body.newPassword;
+            return route.fulfill({ status: 204 });
+        }
+        if (path === "/users/me/avatar" && (method === "PUT" || method === "DELETE")) {
+            avatarKey = method === "PUT" ? "avatar_1_new.png" : null;
+            record(`${method} /users/me/avatar`, null);
+            return json(route, me());
+        }
+        const avatar = path.match(/^\/users\/(\d+)\/avatar$/);
+        if (method === "GET" && avatar) {
+            return avatarKey && Number(avatar[1]) === ME.id
+                ? route.fulfill({ status: 200, contentType: "image/png", body: PNG })
+                : route.fulfill({ status: 404 });
+        }
+        if (method === "GET" && path === "/users/blocked") return json(route, backend.blocked);
+        const block = path.match(/^\/users\/(\d+)\/block$/);
+        if (block && (method === "PUT" || method === "DELETE")) {
+            const id = Number(block[1]);
+            record(`${method} /users/{id}/block`, id);
+            backend.blocked = backend.blocked.filter(u => u.id !== id);
+            if (method === "PUT") backend.blocked.push(backend.users.find(u => u.id === id)!);
+            return route.fulfill({ status: 204 });
+        }
+
+        /* ---- chats: settings, groups */
+        const chatPath = path.match(/^\/chats\/chat\/(\d+)(\/.*)?$/);
+        if (chatPath && !chatPath[2]?.startsWith("/messages")) {
+            const chat = chatOf(Number(chatPath[1]));
+            const rest = chatPath[2] ?? "";
+            if (!chat) return route.fulfill({ status: 404 });
+            if (method === "GET" && rest === "") return json(route, withFlags(chat));
+            if (method === "PATCH" && rest === "/settings") {
+                const body = request.postDataJSON() as { archived?: boolean; muted?: boolean };
+                record("PATCH /chats/chat/{id}/settings", body);
+                Object.assign(chat, body);
+                return json(route, withFlags(chat));
+            }
+            if (method === "PATCH" && rest === "") {
+                const { name } = request.postDataJSON() as { name: string };
+                record("PATCH /chats/chat/{id}", name);
+                chat.name = name;
+                return json(route, withFlags(chat));
+            }
+            if (method === "POST" && rest === "/members") {
+                const { userIds } = request.postDataJSON() as { userIds: number[] };
+                record("POST /chats/chat/{id}/members", userIds);
+                chat.users.push(...userIds.map(id => backend.users.find(u => u.id === id)!));
+                return json(route, withFlags(chat));
+            }
+            const member = rest.match(/^\/members\/(\d+)$/);
+            if (method === "DELETE" && member) {
+                record("DELETE /chats/chat/{id}/members/{userId}", Number(member[1]));
+                chat.users = chat.users.filter(u => u.id !== Number(member[1]));
+                return route.fulfill({ status: 200 });
+            }
+            const admin = rest.match(/^\/admins\/(\d+)$/);
+            if (admin && (method === "PUT" || method === "DELETE")) {
+                const id = Number(admin[1]);
+                record(`${method} /chats/chat/{id}/admins/{userId}`, id);
+                const others = (chat.adminIds ?? []).filter(a => a !== id);
+                chat.adminIds = method === "PUT" ? [ ...others, id ] : others;
+                return json(route, withFlags(chat));
+            }
+        }
+
         if (method === "GET" && path.startsWith("/chats/")) {
             const withMessages = new URL(request.url()).searchParams.get("includeMessages") !== "false";
-            return json(route, withMessages ? backend.chats : backend.chats.map(c => ({ ...c, messages: [] })));
+            const chats = backend.chats.map(withFlags);
+            return json(route, withMessages ? chats : chats.map(c => ({ ...c, messages: [] })));
         }
 
         if (method === "GET" && path.startsWith("/user/")) {
             const query = decodeURIComponent(path.slice("/user/".length)).toLowerCase();
-            return json(route, backend.users.filter(u =>
+            return json(route, backend.users.filter(u => u.id !== signedInId &&
                 `${u.name} ${u.surname} ${u.username}`.toLowerCase().includes(query)));
         }
 
         if (method === "POST" && path === "/chats") {
-            const { userIds } = request.postDataJSON() as { userIds: number[] };
-            backend.posted.chats.push({ userIds });
+            const { userIds, name } = request.postDataJSON() as { userIds: number[]; name?: string };
+            backend.posted.chats.push(name ? { userIds, name } : { userIds });
+            const group = !!name || userIds.length > 2;
+            // like the server: a 1:1 chat of two people exists only once
+            const existing = group ? undefined : backend.chats.find(c => !c.group && userIds.every(id => c.users.some(u => u.id === id)));
+            if (existing) return json(route, withFlags(existing));
             const chat: Chat = {
-                id: 20,
+                id: nextChatId++,
                 users: userIds.map(id => backend.users.find(u => u.id === id)!),
                 messages: [],
-                status: userIds.map(userId => ({ id: { chatId: 20, userId }, messageId: null })),
+                status: userIds.map(userId => ({ id: { chatId: nextChatId - 1, userId }, messageId: null })),
+                group,
+                name: name ?? null,
+                adminIds: group ? [ userIds[0] ] : [],
             };
-            return json(route, chat);
+            backend.chats.push(chat);
+            return json(route, withFlags(chat));
         }
 
         if (method === "PUT" && path === "/status") {

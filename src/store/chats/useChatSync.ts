@@ -4,8 +4,10 @@ import type { IMessage } from "@stomp/stompjs";
 import { useAppDispatch, useAppSelector } from "../hooks";
 import type { RootState } from "../index";
 import type { Chat, ChatStatus, Message, Presence } from "../../types";
-import { selectAuthDetails } from "../auth/authSlice";
-import { addChat, addMessage, setChats, setPresence, setTyping, syncChats, updatePresence, updateStatus } from "./chatsSlice";
+import { selectAuthDetails, updateDetails } from "../auth/authSlice";
+import {
+    addChat, addMessage, removeChat, setBlocked, setChats, setPresence, setTyping, syncChats, updatePresence, updateStatus, upsertChat, updateUser
+} from "./chatsSlice";
 import ChatAPI, { PAGE_SIZE } from "../ChatAPI";
 
 /* how long somebody is shown as writing after their last typing event */
@@ -21,11 +23,11 @@ interface TypingEvent {
 const useChatSync = () => {
     const dispatch = useAppDispatch();
     const store = useStore<RootState>();
-    const authDetails = useAppSelector(selectAuthDetails);
+    // only the identity matters: a profile change (name, avatar) must not restart the whole sync
+    const myId = useAppSelector(selectAuthDetails)?.id;
 
     useEffect(() => {
-        if (!authDetails) return;
-        const myId = authDetails.id;
+        if (myId === undefined) return;
 
         /* the backend payload is trusted to have the declared shape */
         const parse = <T>(incoming: IMessage): T | null => {
@@ -88,11 +90,26 @@ const useChatSync = () => {
             chat.users.forEach(u => ChatAPI.watchUser(u.id));
         };
 
-        const onNewChat = (incoming: IMessage) => {
+        /* a chat of mine that is new to me (created, or I was added to it) is loaded with its latest messages; a known one is only updated */
+        const onNewChat = async (incoming: IMessage) => {
             const parsedChat = parse<Chat>(incoming);
             if (!parsedChat) return;
-            addNewChat(parsedChat);
+            if (store.getState().chats.chats.some(c => c.id === parsedChat.id)) {
+                dispatch(upsertChat(parsedChat));
+                parsedChat.users.forEach(u => ChatAPI.watchUser(u.id));
+                loadPresence();
+                return;
+            }
+            addNewChat(await withLatestMessages(parsedChat));
             loadPresence();
+        };
+
+        /* I left a group or an admin removed me */
+        const onChatRemoved = (incoming: IMessage) => {
+            const removed = parse<{ chatId: number }>(incoming);
+            if (!removed) return;
+            ChatAPI.unsubscribeChat(removed.chatId);
+            dispatch(removeChat(removed.chatId));
         };
 
         /* messages that arrived while the connection was down, oldest first */
@@ -111,6 +128,12 @@ const useChatSync = () => {
                 const fresh = await ChatAPI.loadAllChats();
                 const known = new Map(store.getState().chats.chats.map(c => [ c.id, c ]));
                 const unknown = fresh.filter(c => !known.has(c.id));
+                // groups I was removed from while the connection was down
+                known.forEach((_, id) => {
+                    if (fresh.some(c => c.id === id)) return;
+                    ChatAPI.unsubscribeChat(id);
+                    dispatch(removeChat(id));
+                });
                 await Promise.all(fresh.filter(c => known.has(c.id)).map(c => catchUp(known.get(c.id) as Chat)));
                 // after the messages, so the unread counts from the server win
                 dispatch(syncChats(fresh));
@@ -121,13 +144,24 @@ const useChatSync = () => {
             }
         };
 
+        /* the token carries the name from sign-in time; the avatar isn't in it at all */
+        ChatAPI.loadProfile()
+            .then(profile => {
+                dispatch(updateDetails({ name: profile.name, surname: profile.surname, avatarKey: profile.avatarKey ?? null }));
+                dispatch(updateUser(profile));
+            })
+            .catch(e => console.error("Failed to load the profile:", e));
+        ChatAPI.loadBlocked()
+            .then(users => dispatch(setBlocked(users)))
+            .catch(e => console.error("Failed to load blocked users:", e));
+
         let cancelled = false;
         ChatAPI.loadAllChats()
             .then(chats => Promise.all(chats.map(withLatestMessages)))
             .then(chats => {
                 if (cancelled) return;
                 dispatch(setChats(chats));
-                ChatAPI.initWebsocket(chats, callbacks, { onNewChat, onPresence, onReconnect });
+                ChatAPI.initWebsocket(chats, callbacks, { onNewChat, onChatRemoved, onPresence, onReconnect });
                 loadPresence();
             })
             .catch(e => console.error("Failed to load chats:", e));
@@ -137,7 +171,7 @@ const useChatSync = () => {
             typingTimers.forEach(clearTimeout);
             ChatAPI.closeWebsocket();
         };
-    }, [ authDetails, dispatch, store ]);
+    }, [ myId, dispatch, store ]);
 }
 
 export default useChatSync;

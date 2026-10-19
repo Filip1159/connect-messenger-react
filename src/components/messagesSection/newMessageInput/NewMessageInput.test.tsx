@@ -17,7 +17,7 @@ const send = vi.mocked(sendMessage);
 const renderInput = (replyTo: number | null = null) => {
     const chat = makeChat(1, "2021-01-01T10:00:00");  // message 10 by user 1
     return render(
-        <Provider store={makeStore({ chats: { chats: [ chat ], activeId: 1, presence: {}, typing: {}, outbox: [], replyTo, listOpen: false } })}>
+        <Provider store={makeStore({ chats: { chats: [ chat ], activeId: 1, presence: {}, typing: {}, outbox: [], replyTo, listOpen: false, blocked: [] } })}>
             <NewMessageInput/>
         </Provider>
     );

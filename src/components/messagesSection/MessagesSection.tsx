@@ -17,6 +17,7 @@ import { Message } from "./message/Message";
 import { ConversationStatus } from "./conversationStatus/ConversationStatus";
 import { PendingMessage } from "./pendingMessage/PendingMessage";
 import { MessageSearch } from "./messageSearch/MessageSearch";
+import { isGroup } from "../../store/chats/chatUtils";
 
 /* how many pages of history are loaded at most to reach a message found by the search */
 const MAX_JUMP_PAGES = 40;
@@ -31,7 +32,9 @@ export const MessagesSection = () => {
     const chat = useAppSelector(selectActiveChat);
     const authDetails = useAppSelector(selectAuthDetails);
     const outbox = useAppSelector(selectOutbox);
-    const {myLastMessage, recipientLastMessage, lastMessage} = useLastMessage(chat, authDetails);
+    const {myLastMessage, recipientLastMessage: otherLastMessage, lastMessage} = useLastMessage(chat, authDetails);
+    const group = isGroup(chat);
+    const recipientLastMessage = group ? null : otherLastMessage;  // the "seen" avatar is for 1:1 chats
     const pageVisible = usePageVisible();
 
     const [bottom, setBottom] = useState<number | null>(null);  // viewport position of the bottom of the last message seen by recipient
@@ -226,11 +229,16 @@ export const MessagesSection = () => {
         if (i > 0 && activeMessages[i - 1].userId === m.userId && df.is5MinDiffBefore()) modifier += " singleMessage--topSticky";
         if (i < len - 1 && activeMessages[i + 1].userId === m.userId && df.is5MinDiffAfter()) modifier += " singleMessage--bottomSticky";
 
+        const startsSeries = !modifier.includes("topSticky");
+        const author = group && m.userId !== authDetails?.id && startsSeries
+            ? chat.users.find(u => u.id === m.userId)?.name ?? strings.group.formerMember
+            : undefined;
+
         const reference = recipientLastMessage === m.id ? setLastMessageRef : null;  // inserts lastMessageRef to last message displayed by second user
 
         return (
             <Message key={m.id} ref={reference} message={m} modifier={modifier} dateFormatter={df}
-                     mine={m.userId === authDetails?.id} highlighted={m.id === highlightId} onJump={jumpTo}/>
+                     mine={m.userId === authDetails?.id} author={author} highlighted={m.id === highlightId} onJump={jumpTo}/>
         );
     });
 
