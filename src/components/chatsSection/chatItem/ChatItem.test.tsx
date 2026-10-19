@@ -29,6 +29,16 @@ describe("ChatItem", () => {
         expect(screen.getByText("Ty: Zdjęcie")).toBeInTheDocument();
     });
 
+    it("shows how many messages are unread", () => {
+        renderItem({ ...makeChat(1, "2021-01-01T10:00:00"), unreadCount: 3 });
+        expect(screen.getByRole("status", { name: "3 unread messages" })).toHaveTextContent("3");
+    });
+
+    it("shows no badge when everything is read", () => {
+        renderItem({ ...makeChat(1, "2021-01-01T10:00:00"), unreadCount: 0 });
+        expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    });
+
     it("can be activated with the keyboard", async () => {
         const onClick = vi.fn();
         renderItem(makeChat(1, null), onClick);

@@ -7,10 +7,12 @@ import useSessionExpiry from "./store/auth/useSessionExpiry";
 import {UserDetailsSection} from "./components/userDetailsSection/UserDetailsSection";
 import ProtectedRoute from "./components/ProtectedRoute";
 import useChatSync from "./store/chats/useChatSync";
+import useUnreadTitle from "./store/chats/useUnreadTitle";
 
 const App = () => {
     useSessionExpiry();
     useChatSync();
+    useUnreadTitle();
 
     return (
         <Router>

@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { annaChat, ME, mockBackend, signInAs } from "./support/backend";
+import { annaChat, makeMessage, ME, mockBackend, PIOTR, signInAs } from "./support/backend";
 
 test.describe("chat", () => {
     test.beforeEach(async ({ page }) => {
@@ -52,13 +52,75 @@ test.describe("chat", () => {
         await page.getByRole("button", { name: "Send" }).click();
 
         await expect.poll(() => backend.posted.messages.length).toBe(1);
+        expect(backend.posted.messages[0]).not.toHaveProperty("userId");
         expect(backend.posted.messages[0]).toMatchObject({
             chatId: "10",
-            userId: String(ME.id),
             type: "TEXT",
             textContent: "See you soon",
         });
         await expect(input).toHaveValue("");
+    });
+
+    test("shows a sent message at once and keeps it in the conversation", async ({ page }) => {
+        await mockBackend(page);
+        await page.goto("/");
+        await page.getByRole("button", { name: /Anna Nowak/ }).click();
+
+        await page.getByLabel("Message").fill("See you soon");
+        await page.getByRole("button", { name: "Send" }).click();
+
+        await expect(page.locator(".singleMessage", { hasText: "See you soon" })).toBeVisible();
+        await expect(page.getByTestId("pending-message")).toHaveCount(0); // confirmed by the server
+    });
+
+    test("a message that could not be sent can be retried", async ({ page }) => {
+        const backend = await mockBackend(page, { failMessagePosts: 1 });
+        await page.goto("/");
+        await page.getByRole("button", { name: /Anna Nowak/ }).click();
+
+        await page.getByLabel("Message").fill("Flaky network");
+        await page.getByRole("button", { name: "Send" }).click();
+
+        await expect(page.getByRole("alert").filter({ hasText: "Not sent" })).toBeVisible();
+        await page.getByRole("button", { name: "Retry" }).click();
+
+        await expect(page.getByTestId("pending-message")).toHaveCount(0);
+        await expect(page.locator(".singleMessage", { hasText: "Flaky network" })).toBeVisible();
+        expect(backend.posted.messages).toHaveLength(2);
+    });
+
+    test("a failed message can be discarded", async ({ page }) => {
+        await mockBackend(page, { failMessagePosts: 1 });
+        await page.goto("/");
+        await page.getByRole("button", { name: /Anna Nowak/ }).click();
+
+        await page.getByLabel("Message").fill("Never mind");
+        await page.getByRole("button", { name: "Send" }).click();
+        await page.getByRole("button", { name: "Discard" }).click();
+
+        await expect(page.locator(".singleMessage", { hasText: "Never mind" })).toHaveCount(0);
+    });
+
+    test("shows unread counts, clears the open chat and counts the rest in the tab title", async ({ page }) => {
+        const chat = { ...annaChat(), unreadCount: 3 };
+        await mockBackend(page, { chats: [chat, { ...annaChat(), id: 11, users: [ME, PIOTR], unreadCount: 2,
+            messages: [makeMessage(200, 11, PIOTR.id, "Ping", "2021-05-04T11:00:00")],
+            status: [{ id: { chatId: 11, userId: ME.id }, messageId: null }, { id: { chatId: 11, userId: PIOTR.id }, messageId: 200 }] }] });
+        await page.goto("/");
+
+        // the newest chat (Anna's) is open and read at once, Piotr's stays unread
+        await expect(page.getByRole("status", { name: "2 unread messages" })).toBeVisible();
+        await expect(page.getByRole("status", { name: "3 unread messages" })).toHaveCount(0);
+        await expect(page).toHaveTitle("(2) CONNECT");
+    });
+
+    test("shows the online state of the person I'm talking to", async ({ page }) => {
+        await mockBackend(page, { presence: [{ userId: 2, online: true, lastSeen: null }] });
+        await page.goto("/");
+        await page.getByRole("button", { name: /Anna Nowak/ }).click();
+
+        await expect(page.locator(".conversationStatus")).toContainText("online");
+        await expect(page.getByRole("img", { name: "online" })).toBeVisible();
     });
 
     test("does not send an empty message", async ({ page }) => {
@@ -81,7 +143,7 @@ test.describe("chat", () => {
         await page.getByRole("button", { name: /Anna Nowak/ }).click();
 
         await expect.poll(() => backend.posted.statuses.length).toBe(1);
-        expect(backend.posted.statuses[0]).toMatchObject({ id: { chatId: 10, userId: ME.id }, messageId: 102 });
+        expect(backend.posted.statuses[0]).toEqual({ id: { chatId: 10 }, messageId: 102 });
     });
 
     test("does not report a read status for messages that are already read", async ({ page }) => {
@@ -94,6 +156,25 @@ test.describe("chat", () => {
 
         await expect(page.getByText("Hi Jan, are we still on for today?")).toBeVisible();
         expect(backend.posted.statuses).toHaveLength(0);
+    });
+
+    test("loads older messages when scrolled to the top", async ({ page }) => {
+        const chat = annaChat();
+        chat.messages = Array.from({ length: 120 }, (_, i) =>
+            makeMessage(100 + i, 10, i % 2 ? 1 : 2, `message ${i}`, "2021-05-04T12:00:00"));
+        const backend = await mockBackend(page, { chats: [chat] });
+        await page.goto("/");
+        await page.getByRole("button", { name: /Anna Nowak/ }).click();
+
+        await expect(page.locator("#messageId219")).toBeVisible();
+        await expect(page.locator("#messageId100")).toHaveCount(0);
+
+        // each scroll to the top brings the next older page (120 messages = 3 pages of 50 at most)
+        await expect(async () => {
+            await page.locator(".messages__container").evaluate(el => { el.scrollTop = 0; });
+            await expect(page.locator("#messageId100")).toHaveCount(1, { timeout: 500 });
+        }).toPass();
+        expect(backend.requests.filter(r => r.includes("/messages"))).toHaveLength(3);
     });
 
     test("starts a new chat from the user search", async ({ page }) => {
@@ -112,6 +193,7 @@ test.describe("chat", () => {
         const backend = await mockBackend(page);
         await page.goto("/");
 
+        await expect(page.getByRole("button", { name: /Anna Nowak/ })).toBeVisible(); // chats are loaded
         await page.getByLabel("Szukaj:").fill("n");
 
         await expect.poll(() => backend.requests.some(r => r.startsWith("GET /user/"))).toBe(true);

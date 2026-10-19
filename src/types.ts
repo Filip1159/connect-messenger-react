@@ -35,4 +35,25 @@ export interface Chat {
     users: User[];
     messages: Message[];
     status: ChatStatus[];
+    /* client-side: older messages exist on the server (history is loaded page by page) */
+    hasMore?: boolean;
+    /* messages of other users that I haven't seen yet */
+    unreadCount?: number;
+}
+
+export interface Presence {
+    userId: number;
+    online: boolean;
+    /* local date and time of the last closed session, null if the user was never seen */
+    lastSeen: string | null;
+}
+
+/* a message of mine that isn't confirmed by the server yet */
+export interface OutboxItem {
+    localId: string;
+    chatId: number;
+    type: MessageType;
+    /* the text, or the name of the chosen file */
+    content: string;
+    status: "sending" | "failed";
 }

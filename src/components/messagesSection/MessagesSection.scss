@@ -5,6 +5,21 @@
     background: $backgroundColor;
     @include setFlex(column, 1, flex-end);
     height: 100%;
+    position: relative;
+
+    &__newBelow {
+        position: absolute;
+        bottom: 70px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 200;
+        padding: 6px 14px;
+        border: none;
+        border-radius: 15px;
+        background: $tooltipBackgroundColor;
+        color: $whiteTextColor;
+        cursor: pointer;
+    }
 
     &__container {
         @include setFlex();
@@ -14,7 +29,7 @@
         &__displayContent {
             @include setFlex(column);    /* make singleMessages fit their content */
             width: 100%;
-            max-height: calc(100vh - 145px);
+            max-height: calc(100vh - 175px);
             padding-right: 30px;
             overflow-y: visible;
             @media (max-width: 576px) {

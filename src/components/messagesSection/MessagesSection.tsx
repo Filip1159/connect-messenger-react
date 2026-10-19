@@ -1,7 +1,7 @@
-import {useCallback, useEffect, useRef, useState} from "react";
-import { useAppSelector } from "../../store/hooks";
+import {useCallback, useEffect, useLayoutEffect, useRef, useState} from "react";
+import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import {selectAuthDetails} from "../../store/auth/authSlice";
-import {selectActiveChat} from "../../store/chats/chatsSlice";
+import {markRead, prependMessages, selectActiveChat, selectOutbox} from "../../store/chats/chatsSlice";
 import DateFormatter from "../../DateFormatter";
 import "./MessagesSection.scss";
 import NewMessageInput from "./newMessageInput/NewMessageInput";
@@ -10,27 +10,43 @@ import usePageVisible from "./hooks/usePageVisible";
 import SeenAvatarsPanel, { type Bounds } from "./seenAvatarPanel/SeenAvatarsPanel";
 import fall from "./seenAvatarPanel/FallingAvatar";
 import strings from "../../strings";
-import ChatAPI from "../../store/ChatAPI";
+import ChatAPI, { PAGE_SIZE } from "../../store/ChatAPI";
 import { Message } from "./message/Message";
+import { ConversationStatus } from "./conversationStatus/ConversationStatus";
+import { PendingMessage } from "./pendingMessage/PendingMessage";
+
+/* closer than this to the bottom (px) counts as reading the newest messages */
+const BOTTOM_TOLERANCE = 40;
 
 export const MessagesSection = () => {
+    const dispatch = useAppDispatch();
     const chat = useAppSelector(selectActiveChat);
     const authDetails = useAppSelector(selectAuthDetails);
+    const outbox = useAppSelector(selectOutbox);
     const {myLastMessage, recipientLastMessage, lastMessage} = useLastMessage(chat, authDetails);
     const pageVisible = usePageVisible();
 
     const [bottom, setBottom] = useState<number | null>(null);  // viewport position of the bottom of the last message seen by recipient
     const [bounds, setBounds] = useState<Bounds | null>(null);  // viewport position of the messages container
     const [viewportHeight, setViewportHeight] = useState(window.innerHeight);
+    const [newBelow, setNewBelow] = useState(false);  // messages arrived while the reader was scrolled up
 
     const contentDisplayerRef = useRef<HTMLDivElement>(null);
     const lastMessageRef = useRef<HTMLDivElement | null>(null);
     const previousBottom = useRef<number | null>(null);
     const cancelFall = useRef<(() => void) | null>(null);
     const sentStatusKey = useRef<string | null>(null);
+    const loadingOlder = useRef(false);
+    const atBottom = useRef(true);
+    const keepScroll = useRef<{ chatId: number; height: number; top: number } | null>(null);
 
     const chatId = chat?.id;
     const messageCount = chat?.messages.length ?? 0;
+    const firstId = chat?.messages[0]?.id;
+    const lastId = chat?.messages[messageCount - 1]?.id;
+    const hasMore = chat?.hasMore ?? false;
+    const lastIsMine = chat?.messages[messageCount - 1]?.userId === authDetails?.id;
+    const pending = outbox.filter(i => i.chatId === chatId);
 
     /* for keeping previous value inside ref */
     useEffect(() => {
@@ -66,24 +82,71 @@ export const MessagesSection = () => {
         } else setBottom(target);
     }, []);
 
-    const scrollToBottom = () => {
+    const scrollToBottom = useCallback(() => {
         if (contentDisplayerRef.current) {
             contentDisplayerRef.current.scrollTop = contentDisplayerRef.current.scrollHeight;
         }
+        atBottom.current = true;
+        setNewBelow(false);
+    }, []);
+
+    const flagNewBelow = useCallback(() => setNewBelow(true), []);
+
+    /* loads the page of messages older than the oldest one displayed */
+    const loadOlder = useCallback(() => {
+        if (chatId === undefined || firstId === undefined || !hasMore || loadingOlder.current) return;
+        loadingOlder.current = true;
+        ChatAPI.loadMessages(chatId, firstId)
+            .then(messages => {
+                const el = contentDisplayerRef.current;
+                if (el && messages.length > 0) keepScroll.current = { chatId, height: el.scrollHeight, top: el.scrollTop };
+                dispatch(prependMessages({ chatId, messages, hasMore: messages.length >= PAGE_SIZE }));
+            })
+            .catch(e => console.error("Failed to load older messages:", e))
+            .finally(() => { loadingOlder.current = false; });
+    }, [chatId, firstId, hasMore, dispatch]);
+
+    /* keeps the reader at the same message after older ones were put above it */
+    useLayoutEffect(() => {
+        const keep = keepScroll.current;
+        const el = contentDisplayerRef.current;
+        if (!keep || !el || keep.chatId !== chatId) return;
+        keepScroll.current = null;
+        el.scrollTop = el.scrollHeight - keep.height + keep.top;
+        measure();
+    }, [firstId, chatId, measure]);
+
+    const handleScroll = () => {
+        const el = contentDisplayerRef.current;
+        if (el) {
+            atBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < BOTTOM_TOLERANCE;
+            if (atBottom.current) setNewBelow(false);
+        }
+        measure();
+        if ((contentDisplayerRef.current?.scrollTop ?? Infinity) < 80) loadOlder();
     };
 
     /* switching between chats */
     useEffect(() => {
         stopFalling();
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- resets the "new messages" hint of the previous chat
         scrollToBottom();
         measure();
-    }, [chatId, measure]);
+    }, [chatId, measure, scrollToBottom]);
 
-    /* new message */
+    /* new message: follow it only when the reader is at the bottom or wrote it; older messages added at the top must not move the view */
     useEffect(() => {
-        scrollToBottom();
+        if (atBottom.current || lastIsMine) scrollToBottom();
+        else flagNewBelow();
         measure();
-    }, [messageCount, measure]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [lastId, measure, scrollToBottom, flagNewBelow]);
+
+    /* my own messages that are still being sent */
+    useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- follows my own message that is being sent
+        if (pending.length > 0) scrollToBottom();
+    }, [pending.length, scrollToBottom]);
 
     useEffect(() => {
         const handleResize = () => {
@@ -102,11 +165,11 @@ export const MessagesSection = () => {
         if (sentStatusKey.current === key) return;
         sentStatusKey.current = key;
 
-        ChatAPI.updateStatus(chatId, lastMessage).catch(e => {
+        ChatAPI.updateStatus(chatId, lastMessage).then(() => dispatch(markRead(chatId))).catch(e => {
             if (sentStatusKey.current === key) sentStatusKey.current = null;  // allow a retry
             console.error("Failed to update status:", e);
         });
-    }, [chatId, myLastMessage, lastMessage, pageVisible]);
+    }, [chatId, myLastMessage, lastMessage, pageVisible, dispatch]);
 
     const renderedMessages = chat?.messages.map((m, i) => {
         const activeMessages = chat.messages;
@@ -134,20 +197,26 @@ export const MessagesSection = () => {
 
     return (
         <div className="messages">
-            {messageCount > 0 ?
+            {chat && <ConversationStatus chat={chat}/>}
+            {messageCount > 0 || pending.length > 0 ?
                 <div
                     ref={contentDisplayerRef}
                     className="messages__container"
-                    onScroll={measure}
+                    onScroll={handleScroll}
                 >
                     <div className="messages__container__displayContent">
                         {renderedMessages}
+                        {pending.map(item => <PendingMessage key={item.localId} item={item}/>)}
                     </div>
                     <SeenAvatarsPanel bottom={bottom} bounds={bounds} viewportHeight={viewportHeight}/>
                 </div>
                 :
                 <span className="noMessages">{strings.chats.noMessages}</span>
             }
+            {newBelow &&
+                <button type="button" className="messages__newBelow" onClick={scrollToBottom}>
+                    {strings.messageStatus.newMessages}
+                </button>}
             <NewMessageInput/>
         </div>
     );

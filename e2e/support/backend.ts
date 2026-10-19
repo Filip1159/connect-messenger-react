@@ -45,6 +45,9 @@ export interface BackendOptions {
     /* credentials accepted by POST /login */
     password?: string;
     loginStatus?: number;
+    /* the first N message posts fail with a 500 */
+    failMessagePosts?: number;
+    presence?: { userId: number; online: boolean; lastSeen: string | null }[];
 }
 
 const json = (route: Route, data: unknown, status = 200) =>
@@ -59,6 +62,8 @@ export const mockBackend = async (page: Page, options: BackendOptions = {}): Pro
         posted: { messages: [], statuses: [], chats: [] },
     };
     const password = options.password ?? "secret";
+    let failuresLeft = options.failMessagePosts ?? 0;
+    let nextMessageId = 1000;
 
     await page.route("**/api/**", async route => {
         const request = route.request();
@@ -77,7 +82,20 @@ export const mockBackend = async (page: Page, options: BackendOptions = {}): Pro
             return route.fulfill({ status: 200, headers: { authentication: makeToken(user) }, body: "" });
         }
 
-        if (method === "GET" && path.startsWith("/chats/")) return json(route, backend.chats);
+        const history = path.match(/^\/chats\/chat\/(\d+)\/messages$/);
+        if (method === "GET" && history) {
+            const params = new URL(request.url()).searchParams;
+            const before = Number(params.get("before") ?? Infinity);
+            const size = Number(params.get("size") ?? 50);
+            const chat = backend.chats.find(c => c.id === Number(history[1]));
+            const older = (chat?.messages ?? []).filter(m => m.id < before);
+            return json(route, older.slice(-size));
+        }
+
+        if (method === "GET" && path.startsWith("/chats/")) {
+            const withMessages = new URL(request.url()).searchParams.get("includeMessages") !== "false";
+            return json(route, withMessages ? backend.chats : backend.chats.map(c => ({ ...c, messages: [] })));
+        }
 
         if (method === "GET" && path.startsWith("/user/")) {
             const query = decodeURIComponent(path.slice("/user/".length)).toLowerCase();
@@ -102,13 +120,19 @@ export const mockBackend = async (page: Page, options: BackendOptions = {}): Pro
             return route.fulfill({ status: 200 });
         }
 
+        if (method === "GET" && path === "/presence") return json(route, options.presence ?? []);
+
         if (method === "POST" && path === "/message") {
             /* multipart body: pull the plain text fields out of it */
             const body = request.postData() ?? "";
             const fields: Record<string, string> = {};
             for (const m of body.matchAll(/name="([^"]+)"\r\n\r\n([^\r]*)\r\n/g)) fields[m[1]] = m[2];
             backend.posted.messages.push(fields);
-            return route.fulfill({ status: 200 });
+            if (failuresLeft > 0) {
+                failuresLeft--;
+                return route.fulfill({ status: 500 });
+            }
+            return json(route, makeMessage(nextMessageId++, Number(fields.chatId), ME.id, fields.textContent ?? "", "2021-05-04T12:05:00"));
         }
 
         return route.fulfill({ status: 404 });

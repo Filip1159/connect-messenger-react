@@ -24,6 +24,19 @@ const strings = {
         you: "Ty",
         photo: "Zdjęcie"
     },
+    presence: {
+        online: "online",
+        typing: "typing...",
+        lastSeen: "last seen",
+        unread: "unread messages"
+    },
+    messageStatus: {
+        sending: "Sending...",
+        failed: "Not sent",
+        retry: "Retry",
+        discard: "Discard",
+        newMessages: "New messages"
+    },
     messageInput: {
         attachImage: "Attach image",
         messageText: "Message",

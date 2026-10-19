@@ -49,6 +49,29 @@
         }
     }
 
+    &__presence {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        margin-right: 6px;
+        border-radius: 50%;
+        background: #4CD964;
+    }
+
+    &__badge {
+        margin-left: 8px;
+        padding: 1px 7px;
+        border-radius: 10px;
+        background: $tooltipBackgroundColor;
+        color: $whiteTextColor;
+        font-size: 12px;
+    }
+
+    &--unread &__details__lastMessage {
+        font-weight: bold;
+        color: $blackTextColor;
+    }
+
     &:hover {
         border-left: 5px solid $primaryColor;
         transition: $transitionTime;

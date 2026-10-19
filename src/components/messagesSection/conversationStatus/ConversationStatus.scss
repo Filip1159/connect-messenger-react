@@ -1,0 +1,25 @@
+@use "../../../styles/variables" as *;
+
+.conversationStatus {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    align-self: stretch;
+    padding: 10px 20px 0;
+    color: $primaryTextColor;
+
+    &__name {
+        font-weight: bold;
+        letter-spacing: 1px;
+    }
+
+    &__state {
+        font-size: $smallMessageTextSize;
+        color: $secondaryColor;
+        min-height: 1em;
+
+        &--online {
+            color: #4CD964;
+        }
+    }
+}

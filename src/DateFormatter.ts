@@ -12,13 +12,6 @@ class DateFormatter {
 
     static #days = ["Niedziela", "Poniedziałek", "Wtorek", "Środa", "Czwartek", "Piątek", "Sobota"];
 
-    /* local date and time without timezone - the format the backend stores */
-    static nowToSql(): string {
-        const d = new Date();
-        return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}` +
-            `T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
-    }
-
     /* accepts "2021-05-04T12:30:15", "2021-05-04 12:30", fractional seconds and explicit timezones */
     static sqlToDateObject(sqlString: string): Date {
         const iso = sqlString.replace(" ", "T");

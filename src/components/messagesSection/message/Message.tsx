@@ -4,13 +4,6 @@ import type DateFormatter from "../../../DateFormatter";
 import ChatAPI from "../../../store/ChatAPI";
 import "./Message.scss"
 
-/* base64 signatures of the supported image types */
-const detectMimeType = (base64: string): string => {
-    if (base64.startsWith("iVBOR")) return "image/png";
-    if (base64.startsWith("R0lG")) return "image/gif";
-    return "image/jpeg";
-};
-
 interface MessageProps {
     message: MessageModel;
     modifier: string;
@@ -24,12 +17,19 @@ export const Message = React.forwardRef<HTMLDivElement, MessageProps>(function M
         if (message.type !== 'FILE') return;
 
         const controller = new AbortController();
+        let objectUrl: string | null = null;
         ChatAPI.loadFile(message.content, controller.signal)
-            .then(base64 => setImageData(`data:${detectMimeType(base64)};base64,${base64}`))
+            .then(blob => {
+                objectUrl = URL.createObjectURL(blob);
+                setImageData(objectUrl);
+            })
             .catch(e => {
                 if (!controller.signal.aborted) console.error("Failed to load image:", e);
             });
-        return () => controller.abort();
+        return () => {
+            controller.abort();
+            if (objectUrl) URL.revokeObjectURL(objectUrl);
+        };
     }, [message.type, message.content])
 
     return (

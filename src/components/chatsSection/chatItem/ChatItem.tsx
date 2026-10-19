@@ -1,5 +1,6 @@
 import { useAppSelector } from "../../../store/hooks";
 import { selectAuthDetails } from "../../../store/auth/authSlice";
+import { selectPresence } from "../../../store/chats/chatsSlice";
 import {getLastMessage, getRecipient} from "../../../store/chats/chatUtils";
 import strings from "../../../strings";
 import { activateOnKey } from "../../common/keyboard";
@@ -22,13 +23,16 @@ interface ChatItemProps {
 
 export const ChatItem = ({chat, modifier, onClick}: ChatItemProps) => {
     const authDetails = useAppSelector(selectAuthDetails);
+    const presence = useAppSelector(selectPresence);
     const lastMessage = getLastMessage(chat);
     const user = getRecipient(chat, authDetails?.id);
     if (!user) return null;
+    const unread = chat.unreadCount ?? 0;
+    const online = presence[user.id]?.online;
 
     return (
         <div
-            className={`chatItem${modifier}`}
+            className={`chatItem${modifier}${unread > 0 ? " chatItem--unread" : ""}`}
             role="button"
             tabIndex={0}
             aria-current={modifier.includes("--active")}
@@ -38,7 +42,12 @@ export const ChatItem = ({chat, modifier, onClick}: ChatItemProps) => {
             <Avatar username={user.username} />
             <div className="chatItem__details">
                 <span className="chatItem__details__nameSurname">
+                    {online && <span className="chatItem__presence" role="img" aria-label={strings.presence.online}/>}
                     {user.name + " " + user.surname}
+                    {unread > 0 &&
+                        <span className="chatItem__badge" role="status" aria-label={`${unread} ${strings.presence.unread}`}>
+                            {unread > 99 ? "99+" : unread}
+                        </span>}
                 </span>
                 <span className="chatItem__details__lastMessage">{
                     lastMessage ?

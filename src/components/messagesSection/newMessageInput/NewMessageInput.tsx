@@ -1,13 +1,19 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { FormEvent } from "react";
 import type { MessageType } from "../../../types";
-import { useAppSelector } from "../../../store/hooks";
+import { useAppDispatch, useAppSelector } from "../../../store/hooks";
+import { sendMessage } from "../../../store/chats/outbox";
 import { selectActiveChat } from "../../../store/chats/chatsSlice";
 import "./NewMessageInput.scss";
 import strings from "../../../strings";
 import ChatAPI from "../../../store/ChatAPI";
 
+/* at most one typing notification per this many ms */
+const TYPING_THROTTLE = 2500;
+
 const NewMessageInput = () => {
+    const dispatch = useAppDispatch();
+    const lastTypingSent = useRef(0);
     const [ textContent, setTextContent ] = useState("");
     const [ fileContent, setFileContent ] = useState<File | null>(null)
     const [ type, setType ] = useState<MessageType | null>(null)
@@ -20,13 +26,20 @@ const NewMessageInput = () => {
         const content = type === 'TEXT' ? textContent : fileContent;
         if (!activeChat || !type || !content) return;
 
-        ChatAPI.postMessage(activeChat.id, type, content)
-            .then(() => {
-                setTextContent("");
-                setFileContent(null)
-                setFileInputIcon("/images/image_icon.png")
-            })
-            .catch(e => console.error("Failed to send message:", e));
+        // the message appears at once; a failure is shown on it, with a retry
+        sendMessage(dispatch, activeChat.id, type, content);
+        setTextContent("");
+        setFileContent(null);
+        setType(null);
+        setFileInputIcon("/images/image_icon.png");
+        lastTypingSent.current = 0;
+    }
+
+    const notifyTyping = (chatId: number) => {
+        const now = Date.now();
+        if (now - lastTypingSent.current < TYPING_THROTTLE) return;
+        lastTypingSent.current = now;
+        ChatAPI.sendTyping(chatId);
     }
 
     return (
@@ -52,6 +65,7 @@ const NewMessageInput = () => {
             <input type="text" value={textContent} className="newMessageInput__input" aria-label={strings.messageInput.messageText}
                    onChange={e => {
                        setTextContent(e.target.value)
+                       if (activeChat && e.target.value) notifyTyping(activeChat.id)
                        setFileContent(null)
                        setType('TEXT')
                        setFileInputIcon("/images/image_icon.png")
