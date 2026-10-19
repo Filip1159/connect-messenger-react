@@ -21,6 +21,19 @@ export interface Message {
     content: string;
     /* local date and time without timezone, e.g. 2021-05-04T12:30:15 */
     time: string;
+    /* set once the author changed the text */
+    editedAt?: string | null;
+    /* the author deleted the message: it keeps its place but has no content */
+    deleted?: boolean;
+    /* the message this one answers (same chat) */
+    replyToId?: number | null;
+    /* who reacted with which emoji, grouped by emoji */
+    reactions?: Reaction[];
+}
+
+export interface Reaction {
+    emoji: string;
+    userIds: number[];
 }
 
 export interface ChatStatus {
@@ -56,4 +69,5 @@ export interface OutboxItem {
     /* the text, or the name of the chosen file */
     content: string;
     status: "sending" | "failed";
+    replyToId?: number;
 }

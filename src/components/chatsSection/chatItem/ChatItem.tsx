@@ -11,6 +11,7 @@ import "./ChatItem.scss";
 const PREVIEW_LENGTH = 35;
 
 const preview = (message: Message): string => {
+    if (message.deleted) return strings.chats.deleted;
     if (message.type === "FILE") return strings.chats.photo;
     return message.content.substring(0, PREVIEW_LENGTH) + (message.content.length > PREVIEW_LENGTH ? "..." : "");
 };
@@ -39,11 +40,13 @@ export const ChatItem = ({chat, modifier, onClick}: ChatItemProps) => {
             onClick={onClick}
             onKeyDown={activateOnKey(onClick)}
         >
-            <Avatar username={user.username} />
+            <div className="chatItem__avatar">
+                <Avatar username={user.username} />
+                {online && <span className="chatItem__presence" role="img" aria-label={strings.presence.online}/>}
+            </div>
             <div className="chatItem__details">
                 <span className="chatItem__details__nameSurname">
-                    {online && <span className="chatItem__presence" role="img" aria-label={strings.presence.online}/>}
-                    {user.name + " " + user.surname}
+                    <span className="chatItem__details__name">{user.name + " " + user.surname}</span>
                     {unread > 0 &&
                         <span className="chatItem__badge" role="status" aria-label={`${unread} ${strings.presence.unread}`}>
                             {unread > 99 ? "99+" : unread}

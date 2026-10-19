@@ -11,9 +11,11 @@ export interface ChatsState {
     presence: Record<number, Presence>; // userId -> presence
     typing: Record<number, number[]>; // chatId -> users who are writing right now
     outbox: OutboxItem[]; // my messages waiting for the server
+    replyTo: number | null; // id of the message I'm answering in the active chat
+    listOpen: boolean; // narrow screens show either the chat list or the conversation
 }
 
-export const initialChatState: ChatsState = { chats: [], activeId: null, presence: {}, typing: {}, outbox: [] };
+export const initialChatState: ChatsState = { chats: [], activeId: null, presence: {}, typing: {}, outbox: [], replyTo: null, listOpen: true };
 
 const chatsSlice = createSlice({
     name: "chats",
@@ -25,7 +27,15 @@ const chatsSlice = createSlice({
             state.chats = chats;
         },
         setActive: (state, action: PayloadAction<number>) => {
+            if (state.activeId !== action.payload) state.replyTo = null;
             state.activeId = action.payload;
+            state.listOpen = false;
+        },
+        showChatList: state => {
+            state.listOpen = true;
+        },
+        setReplyTo: (state, action: PayloadAction<number | null>) => {
+            state.replyTo = action.payload;
         },
         addChat: (state, action: PayloadAction<Chat>) => {
             if (state.chats.some(c => c.id === action.payload.id)) return;
@@ -37,7 +47,17 @@ const chatsSlice = createSlice({
             reducer: (state, action: PayloadAction<Message, string, { incoming: boolean }>) => {
                 const message = action.payload;
                 const chat = state.chats.find(c => c.id === message.chatId);
-                if (!chat || chat.messages.some(m => m.id === message.id)) return;
+                if (!chat) return;
+                const index = chat.messages.findIndex(m => m.id === message.id);
+                if (index !== -1) {
+                    // the same message again: an edit or a delete (or a duplicate delivery), never unread
+                    const known = chat.messages[index];
+                    if (known.content !== message.content || known.editedAt !== message.editedAt || known.deleted !== message.deleted
+                        || JSON.stringify(known.reactions ?? []) !== JSON.stringify(message.reactions ?? [])) {
+                        chat.messages[index] = message;
+                    }
+                    return;
+                }
                 chat.messages.push(message);
                 if (action.meta.incoming) chat.unreadCount = (chat.unreadCount ?? 0) + 1;
                 state.typing[message.chatId] = (state.typing[message.chatId] ?? []).filter(u => u !== message.userId);
@@ -105,7 +125,7 @@ const chatsSlice = createSlice({
 });
 
 export const {
-    setChats, setActive, addChat, addMessage, prependMessages, updateStatus, markRead, syncChats,
+    setChats, setActive, showChatList, setReplyTo, addChat, addMessage, prependMessages, updateStatus, markRead, syncChats,
     setPresence, updatePresence, setTyping, outboxAdd, outboxStatus, outboxRemove
 } = chatsSlice.actions;
 
@@ -115,6 +135,12 @@ export const selectTyping = (state: RootState) => state.chats.typing;
 export const selectOutbox = (state: RootState) => state.chats.outbox;
 export const selectTotalUnread = (state: RootState) =>
     state.chats.chats.reduce((sum, c) => sum + (c.unreadCount ?? 0), 0);
+/* the message I'm answering, if it is still in the active chat */
+export const selectReplyTarget = (state: RootState): Message | null => {
+    const chat = state.chats.chats.find(c => c.id === state.chats.activeId);
+    return chat?.messages.find(m => m.id === state.chats.replyTo && !m.deleted) ?? null;
+};
+export const selectListOpen = (state: RootState) => state.chats.listOpen;
 export const selectActiveId = (state: RootState) => state.chats.activeId;
 export const selectActiveChat = (state: RootState): Chat | null => state.chats.chats.find(c => c.id === state.chats.activeId) ?? null;
 

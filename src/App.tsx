@@ -8,11 +8,14 @@ import {UserDetailsSection} from "./components/userDetailsSection/UserDetailsSec
 import ProtectedRoute from "./components/ProtectedRoute";
 import useChatSync from "./store/chats/useChatSync";
 import useUnreadTitle from "./store/chats/useUnreadTitle";
+import { useAppSelector } from "./store/hooks";
+import { selectListOpen } from "./store/chats/chatsSlice";
 
 const App = () => {
     useSessionExpiry();
     useChatSync();
     useUnreadTitle();
+    const listOpen = useAppSelector(selectListOpen);
 
     return (
         <Router>
@@ -20,7 +23,7 @@ const App = () => {
             <Routes>
                 <Route path="/login" element={<LoginPage/>}/>
                 <Route path="/" element={<ProtectedRoute>
-                    <div className="app__container">
+                    <div className={`app__container app__container--${listOpen ? "list" : "chat"}`}>
                         <ChatsSection/>
                         <MessagesSection/>
                         <UserDetailsSection/>

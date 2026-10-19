@@ -1,14 +1,15 @@
-.seenAvatar { 
+.seenAvatar {
     height: 20px;
     width: 20px;
-    margin-left: -50px;
     border-radius: 50%;
+    object-fit: cover;
     position: absolute;
+    right: 12px;  /* against the conversation box, in the padding reserved next to the messages */
     z-index: 4;
 
-    @media (max-width: 576px) {
-        height: 12px;
-        width: 12px;
-        margin-left: -30px;
+    @media (max-width: 768px) {
+        height: 16px;
+        width: 16px;
+        right: 8px;
     }
 }

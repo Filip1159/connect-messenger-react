@@ -4,119 +4,311 @@
 .singleMessage {
     $self: &;
     position: relative;
-    border-radius: 20px;
-    letter-spacing: 1px;
-    padding: 10px 20px;
-    margin: 10px;
-    max-width: 60%;
-    font-size: $messageTextSize;
+    box-sizing: border-box;
+    border-radius: 18px;
+    padding: 8px 14px;
+    margin: 6px 0;
+    max-width: min(560px, 75%);
+    font-size: 16px;
+    line-height: 1.4;
+    letter-spacing: .2px;
+    color: $bubbleTextColor;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
     cursor: default;
+    transition: box-shadow $transitionTime;
 
-    @media (max-width: 576px) {
-        font-size: $smallMessageTextSize;
-        padding: 5px 10px;
-        border-radius: 10px;
+    @media (max-width: $phoneBreakpoint) {
+        max-width: 85%;
+        font-size: 15px;
+        padding: 7px 12px;
     }
 
-    &:hover > .singleMessage__tooltip {
+    a {
+        color: inherit;
+        text-decoration: underline;
+    }
+
+    &:focus-visible {
+        outline: 2px solid $whiteTextColor;
+        outline-offset: 2px;
+    }
+
+    &:hover > &__tooltip {
         opacity: 100%;
         transition: opacity $transitionTime linear 1s;  /* property duration type delay */
     }
 
     &__tooltip {
-        background: $tooltipBackgroundColor;
+        background: $surfaceRaisedColor;
+        color: $whiteTextColor;
         font-size: $tooltipTextSize;
+        letter-spacing: 0;
         position: absolute;
-        top: 10px;
-        border-radius: 5px;
-        padding: 8px;
+        top: 50%;
+        transform: translateY(-50%);
+        border-radius: 6px;
+        padding: 6px 8px;
         opacity: 0;
         z-index: 100;
+        white-space: nowrap;
+        pointer-events: none;  /* decorative: must not cover the buttons of other messages */
 
-        @media (max-width: 576px) {
+        @media (max-width: $phoneBreakpoint), (hover: none) {
             display: none;
-        }
-
-        &::after {
-            content: "";
-            position: absolute;
-            top: 8px;
-            border-width: 5px;
-            border-style: solid;
         }
     }
 
     &__img {
         max-width: 100%;
-        max-height: 30vh;
+        max-height: min(40vh, 320px);
         border-radius: inherit;
+        display: block;
+    }
+
+    &__imgButton {
+        display: block;
+        padding: 0;
+        border: none;
+        background: none;
+        border-radius: inherit;
+        cursor: zoom-in;
+    }
+
+    &__imgState {
+        padding: 30px 40px;
+        font-size: 13px;
+        color: $whiteTextColor;
+        white-space: normal;
+    }
+
+    &__edited {
+        font-size: $tooltipTextSize;
+        opacity: 0.65;
+    }
+
+    &--deleted {
+        font-style: italic;
+        opacity: 0.55;
+    }
+
+    &__quote {
+        display: block;
+        width: 100%;
+        box-sizing: border-box;
+        margin-bottom: 6px;
+        padding: 4px 8px;
+        text-align: left;
+        font: inherit;
+        font-size: 13px;
+        line-height: 1.3;
+        letter-spacing: 0;
+        color: inherit;
+        background: rgba(0, 0, 0, 0.12);
+        border: none;
+        border-left: 3px solid rgba(0, 0, 0, 0.45);
+        border-radius: 6px;
+        cursor: pointer;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    /* the bubble leaves room for the reactions that hang over its bottom edge */
+    &--reacted {
+        margin-bottom: 18px;
+    }
+
+    &__reactions {
+        position: absolute;
+        bottom: -12px;
+        display: flex;
+        gap: 4px;
+        z-index: 5;
+    }
+
+    &--receivedMsg &__reactions {
+        left: 10px;
+    }
+
+    &--myMsg &__reactions {
+        right: 10px;
+    }
+
+    &__reaction {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 2px 8px;
+        border: 1px solid $borderColor;
+        border-radius: 12px;
+        background: $surfaceRaisedColor;
+        color: $whiteTextColor;
+        font: inherit;
+        font-size: 12px;
+        line-height: 1.3;
+        letter-spacing: 0;
+        cursor: default;
+        white-space: nowrap;
+
+        &--mine {
+            border-color: $primaryColor;
+            cursor: pointer;
+
+            &:hover:not(:disabled) {
+                background: $borderColor;
+            }
+        }
+    }
+
+    &--img &__quote {
+        margin: 6px;
+        width: calc(100% - 12px);
+    }
+
+    &--highlighted {
+        box-shadow: 0 0 0 3px $whiteTextColor;
+    }
+
+    &--editing {
+        min-width: min(320px, 75%);
+    }
+
+    &__editor {
+        width: 100%;
+        box-sizing: border-box;
+        resize: none;
+        font: inherit;
+        letter-spacing: inherit;
+        color: $bubbleTextColor;
+        border: 1px solid rgba(0, 0, 0, 0.3);
+        border-radius: 8px;
+        padding: 6px 8px;
+        background: rgba(255, 255, 255, 0.7);
+    }
+
+    &__editButtons {
+        display: flex;
+        gap: 8px;
+        margin-top: 6px;
+
+        button {
+            cursor: pointer;
+            padding: 4px 12px;
+            border: none;
+            border-radius: 12px;
+            background: $bubbleTextColor;
+            color: $whiteTextColor;
+            font: inherit;
+            font-size: 13px;
+
+            &:disabled {
+                opacity: .5;
+                cursor: default;
+            }
+        }
+    }
+
+    &__error {
+        font-size: 12px;
+        margin-top: 4px;
+    }
+
+    &__actions {
+        position: absolute;
+        top: -16px;
+        right: 10px;
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        padding: 2px 4px;
+        border-radius: 12px;
+        background: $surfaceRaisedColor;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+        color: $whiteTextColor;
+        font-size: 12px;
+        line-height: 1.2;
+        letter-spacing: 0;
+        white-space: nowrap;
+        opacity: 0;
+        pointer-events: none;  /* hidden toolbars must not catch clicks meant for other messages */
+        transition: opacity $transitionTime;
+        z-index: 150;
+
+        button {
+            border: none;
+            background: none;
+            color: inherit;
+            font: inherit;
+            padding: 4px 6px;
+            border-radius: 8px;
+            cursor: pointer;
+
+            &:hover, &:focus-visible {
+                background: rgba(255, 255, 255, 0.15);
+            }
+
+            @media (hover: none) {
+                padding: 8px 10px;
+            }
+        }
+    }
+
+    &:hover > &__actions,
+    &:focus-within > &__actions,
+    &__actions:focus-within {
+        opacity: 1;
+        pointer-events: auto;
     }
 
     &--img {
         padding: 0;
-        background-color: #282c34 !important;
+        background-color: $surfaceRaisedColor !important;
+        overflow: visible;
     }
 
     &--receivedMsg {
         background: $secondaryColor;
-        margin-left: 10px;
         margin-right: auto;
-        color: $whiteTextColor;
 
         #{ $self }__tooltip {
             left: calc(100% + 10px);
-
-            &::after {
-                right: 100%;
-                border-color: transparent $tooltipBackgroundColor transparent transparent;
-            }
         }
     }
 
     &--receivedMsg#{&}--topSticky {
         margin-top: 1px;
-        border-top-left-radius: 0;
+        border-top-left-radius: 4px;
     }
 
     &--receivedMsg#{&}--bottomSticky {
         margin-bottom: 1px;
-        border-bottom-left-radius: 0;
+        border-bottom-left-radius: 4px;
     }
 
     &--myMsg {
         background: $primaryColor;
-        margin-right: 10px;
         margin-left: auto;
-        color: $blackTextColor;
 
         #{ $self }__tooltip {
             right: calc(100% + 10px);
-
-            &::after {
-                left: 100%;
-                border-color: transparent transparent transparent $tooltipBackgroundColor;
-            }
         }
     }
 
     &--myMsg#{&}--topSticky {
         margin-top: 1px;
-        border-top-right-radius: 0;
+        border-top-right-radius: 4px;
     }
 
     &--myMsg#{&}--bottomSticky {
         margin-bottom: 1px;
-        border-bottom-right-radius: 0;
+        border-bottom-right-radius: 4px;
     }
 
     &__time {
-        font-size: $timeTextSize;
+        font-size: 12px;
         text-align: center;
-        color: $primaryColor;
-        margin-top: 15px;
-
-        @media (max-width: 576px) {
-            font-size: $smallTimeTextSize;
-        }
+        color: $mutedTextColor;
+        margin: 14px 0 4px;
     }
 }

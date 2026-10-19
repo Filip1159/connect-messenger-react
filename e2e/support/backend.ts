@@ -36,6 +36,9 @@ export interface Backend {
     users: User[];
     /* every request the app made to a mocked endpoint, as "METHOD /path" */
     requests: string[];
+    edited: { id: number; textContent: string }[];
+    deleted: number[];
+    reacted: { id: number; emoji: string | null }[];
     posted: { messages: Record<string, string>[]; statuses: unknown[]; chats: unknown[] };
 }
 
@@ -59,6 +62,9 @@ export const mockBackend = async (page: Page, options: BackendOptions = {}): Pro
         chats: options.chats ?? [annaChat()],
         users: options.users ?? [ME, ANNA, PIOTR],
         requests: [],
+        edited: [],
+        deleted: [],
+        reacted: [],
         posted: { messages: [], statuses: [], chats: [] },
     };
     const password = options.password ?? "secret";
@@ -86,10 +92,51 @@ export const mockBackend = async (page: Page, options: BackendOptions = {}): Pro
         if (method === "GET" && history) {
             const params = new URL(request.url()).searchParams;
             const before = Number(params.get("before") ?? Infinity);
+            const query = params.get("query");
+            if (query) {
+                const matches = (backend.chats.find(c => c.id === Number(history[1]))?.messages ?? [])
+                    .filter(m => m.id < before && !m.deleted && m.type === "TEXT" && m.content.toLowerCase().includes(query.toLowerCase()))
+                    .reverse();
+                return json(route, matches.slice(0, Number(params.get("size") ?? 50)));
+            }
             const size = Number(params.get("size") ?? 50);
             const chat = backend.chats.find(c => c.id === Number(history[1]));
             const older = (chat?.messages ?? []).filter(m => m.id < before);
             return json(route, older.slice(-size));
+        }
+
+        const reaction = path.match(/^\/message\/(\d+)\/reaction$/);
+        if (reaction && (method === "PUT" || method === "DELETE")) {
+            const message = backend.chats.flatMap(c => c.messages).find(m => m.id === Number(reaction[1]));
+            if (!message) return route.fulfill({ status: 404 });
+            const others = (message.reactions ?? [])
+                .map(r => ({ ...r, userIds: r.userIds.filter(u => u !== ME.id) }))
+                .filter(r => r.userIds.length > 0);
+            if (method === "PUT") {
+                const { emoji } = request.postDataJSON() as { emoji: string };
+                backend.reacted.push({ id: message.id, emoji });
+                const same = others.find(r => r.emoji === emoji);
+                if (same) same.userIds.push(ME.id);
+                else others.push({ emoji, userIds: [ME.id] });
+            } else backend.reacted.push({ id: message.id, emoji: null });
+            message.reactions = others;
+            return json(route, message);
+        }
+
+        const single = path.match(/^\/message\/(\d+)$/);
+        if (single && (method === "PATCH" || method === "DELETE")) {
+            const id = Number(single[1]);
+            const message = backend.chats.flatMap(c => c.messages).find(m => m.id === id);
+            if (!message) return route.fulfill({ status: 404 });
+            if (method === "PATCH") {
+                const { textContent } = request.postDataJSON() as { textContent: string };
+                backend.edited.push({ id, textContent });
+                Object.assign(message, { content: textContent, editedAt: "2021-05-04T12:10:00" });
+            } else {
+                backend.deleted.push(id);
+                Object.assign(message, { content: "", deleted: true });
+            }
+            return json(route, message);
         }
 
         if (method === "GET" && path.startsWith("/chats/")) {
@@ -126,13 +173,15 @@ export const mockBackend = async (page: Page, options: BackendOptions = {}): Pro
             /* multipart body: pull the plain text fields out of it */
             const body = request.postData() ?? "";
             const fields: Record<string, string> = {};
-            for (const m of body.matchAll(/name="([^"]+)"\r\n\r\n([^\r]*)\r\n/g)) fields[m[1]] = m[2];
+            for (const m of body.matchAll(/name="([^"]+)"\r\n\r\n([\s\S]*?)\r\n--/g)) fields[m[1]] = m[2];
             backend.posted.messages.push(fields);
             if (failuresLeft > 0) {
                 failuresLeft--;
                 return route.fulfill({ status: 500 });
             }
-            return json(route, makeMessage(nextMessageId++, Number(fields.chatId), ME.id, fields.textContent ?? "", "2021-05-04T12:05:00"));
+            const created = makeMessage(nextMessageId++, Number(fields.chatId), ME.id, fields.textContent ?? "", "2021-05-04T12:05:00");
+            if (fields.replyToId) created.replyToId = Number(fields.replyToId);
+            return json(route, created);
         }
 
         return route.fulfill({ status: 404 });

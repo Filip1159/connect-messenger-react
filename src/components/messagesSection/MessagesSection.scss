@@ -3,48 +3,63 @@
 
 .messages {
     background: $backgroundColor;
-    @include setFlex(column, 1, flex-end);
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
     height: 100%;
-    position: relative;
+    position: relative;  /* the "seen" avatar is positioned against this box */
+
+    &__notice {
+        align-self: stretch;
+        padding: 6px 20px;
+        background: $surfaceRaisedColor;
+        color: $whiteTextColor;
+        font-size: 13px;
+    }
 
     &__newBelow {
         position: absolute;
-        bottom: 70px;
+        bottom: 84px;
         left: 50%;
         transform: translateX(-50%);
         z-index: 200;
-        padding: 6px 14px;
+        padding: 8px 16px;
         border: none;
-        border-radius: 15px;
+        border-radius: 18px;
         background: $tooltipBackgroundColor;
         color: $whiteTextColor;
+        font-weight: 700;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
         cursor: pointer;
     }
 
     &__container {
-        @include setFlex();
-        @include fancyScrollbar(right);
+        display: flex;
+        flex: 1;
+        min-height: 0;
         overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: $borderColor transparent;
 
         &__displayContent {
-            @include setFlex(column);    /* make singleMessages fit their content */
+            display: flex;
+            flex-direction: column;
             width: 100%;
-            max-height: calc(100vh - 175px);
-            padding-right: 30px;
-            overflow-y: visible;
-            @media (max-width: 576px) {
-                padding-right: 16px;
+            padding: 8px 40px 12px 20px;  /* the right padding leaves room for the "seen" avatar */
+
+            @media (max-width: $phoneBreakpoint) {
+                padding: 8px 30px 8px 12px;
             }
         }
     }
 }
 
 .noMessages {
-    color: $secondaryTextColor;
-    font-size: $messageTextSize;
-    margin-top: 26px;
-    display: flex;
-    flex: 1;
-    align-self: center;
-
+    color: $mutedTextColor;
+    font-size: 16px;
+    margin: auto;
+    padding: 20px;
+    text-align: center;
 }

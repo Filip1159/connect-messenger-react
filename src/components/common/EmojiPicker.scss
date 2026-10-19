@@ -1,0 +1,31 @@
+.emojiPicker {
+    position: absolute;
+    bottom: 100%;
+    left: 12px;
+    z-index: 300;
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 2px;
+    padding: 8px;
+    max-width: calc(100vw - 40px);
+    border-radius: 10px;
+    background: #282c34;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+
+    @media (max-width: 576px) {
+        grid-template-columns: repeat(6, 1fr);
+    }
+
+    &__item {
+        border: none;
+        background: none;
+        font-size: 22px;
+        padding: 4px;
+        border-radius: 6px;
+        cursor: pointer;
+
+        &:hover, &:focus-visible {
+            background: rgba(255, 255, 255, 0.15);
+        }
+    }
+}

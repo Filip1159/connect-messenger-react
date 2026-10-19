@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import reducer, {
-    addChat, addMessage, initialChatState, markRead, outboxAdd, outboxRemove, outboxStatus, prependMessages, setActive,
+    addChat, addMessage, initialChatState, markRead, outboxAdd, outboxRemove, outboxStatus, prependMessages, setActive, setReplyTo,
     setChats, setPresence, setTyping, syncChats, updatePresence, updateStatus
 } from "./chatsSlice";
 import { resetDetails } from "../auth/authSlice";
@@ -34,6 +34,35 @@ describe("chatsSlice", () => {
         const existing = message(20, 2, "2021-01-02T10:00:00", "hi");
         expect(reducer(state, addMessage(existing))).toBe(state);
         expect(reducer(state, addMessage({ ...existing, id: 5, chatId: 404 }))).toBe(state);
+    });
+
+    it("replaces a message that was edited or deleted, without counting it as new", () => {
+        const original = message(20, 2, "2021-01-02T10:00:00", "hi");
+        let state = reducer(withChats(), addMessage({ ...original, content: "hi there", editedAt: "2021-01-02T10:05:00" }, true));
+        let chat = state.chats.find(c => c.id === 2)!;
+        expect(chat.messages).toHaveLength(1);
+        expect(chat.messages[0]).toMatchObject({ content: "hi there", editedAt: "2021-01-02T10:05:00" });
+        expect(chat.unreadCount ?? 0).toBe(0);
+
+        state = reducer(state, addMessage({ ...original, content: "", deleted: true }, true));
+        chat = state.chats.find(c => c.id === 2)!;
+        expect(chat.messages[0]).toMatchObject({ content: "", deleted: true });
+    });
+
+    it("takes new reactions of a known message", () => {
+        const original = message(20, 2, "2021-01-02T10:00:00", "hi");
+        const state = reducer(withChats(), addMessage({ ...original, reactions: [ { emoji: "👍", userIds: [ 2 ] } ] }, true));
+        const chat = state.chats.find(c => c.id === 2)!;
+        expect(chat.messages[0].reactions).toEqual([ { emoji: "👍", userIds: [ 2 ] } ]);
+        expect(chat.unreadCount ?? 0).toBe(0);
+    });
+
+    it("forgets the message being answered when another chat is opened", () => {
+        let state = reducer(withChats(), setActive(1));
+        state = reducer(state, setReplyTo(10));
+        expect(state.replyTo).toBe(10);
+        expect(reducer(state, setActive(1)).replyTo).toBe(10);
+        expect(reducer(state, setActive(2)).replyTo).toBeNull();
     });
 
     it("puts older messages in front, skipping the ones already known", () => {

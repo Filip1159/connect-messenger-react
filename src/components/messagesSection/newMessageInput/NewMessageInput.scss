@@ -2,67 +2,149 @@
 @use "../../../styles/mixins" as *;
 
 .newMessageInput {
-    @include setFlex();
+    position: relative;
+    flex: none;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    background: $surfaceColor;
+    border-top: 1px solid $borderColor;
+    padding-bottom: env(safe-area-inset-bottom);
+
+    &--dragging {
+        outline: 2px dashed $primaryColor;
+        outline-offset: -4px;
+    }
+
+    &__row {
+        display: flex;
+        align-items: flex-end;
+        gap: 4px;
+        padding: 10px 12px;
+        position: relative;
+
+        @media (max-width: $phoneBreakpoint) {
+            padding: 8px;
+        }
+    }
+
+    &__reply {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 8px 12px 0;
+        padding: 6px 10px;
+        border-left: 3px solid $primaryColor;
+        border-radius: 4px;
+        background: $surfaceRaisedColor;
+        color: $whiteTextColor;
+        font-size: 13px;
+
+        &__text {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        button {
+            border: none;
+            background: none;
+            color: inherit;
+            font-size: 22px;
+            line-height: 1;
+            cursor: pointer;
+        }
+    }
+
+    &__attachment {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 16px 0;
+        color: $whiteTextColor;
+        font-size: 13px;
+
+        &__img {
+            width: 48px;
+            height: 48px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+
+        &__name {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 40%;
+        }
+
+        &__error {
+            color: $dangerColor;
+        }
+
+        button {
+            border: none;
+            background: none;
+            color: inherit;
+            font-size: 22px;
+            line-height: 1;
+            cursor: pointer;
+        }
+    }
+
+    &__emojiBtn,
+    &__fileInputLabel,
+    &__btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex: none;
+        width: 40px;
+        height: 40px;
+        padding: 0;
+        border: none;
+        border-radius: 50%;
+        background: none;
+        cursor: pointer;
+        transition: background $transitionTime;
+
+        &:hover {
+            background: $surfaceRaisedColor;
+        }
+    }
+
+    &__emojiBtn {
+        font-size: 20px;
+        color: $primaryColor;
+    }
 
     &__input {
-        @include setFlex(row, 1);
-        margin: 18px;
-
-        @media (max-width: 576px) {
-            margin: 10px;
-            font-size: $smallMessageTextSize !important;  /* for some reason browser prefers input[type="text"] property equals to 18px */
-        }
+        flex: 1;
+        min-width: 0;
+        margin: 0;
+        padding: 10px 16px;
+        resize: none;
+        line-height: 1.3;
+        min-height: 40px;  /* the field can be mounted while hidden (narrow screens), where it can't be measured */
+        max-height: 160px;
+        border-radius: 20px;
     }
 
     &__fileInput {
         opacity: 0;
         width: 1px;
         height: 1px;
+        position: absolute;
     }
 
-    &__fileInputLabel {
-
-        &__img {
-            width: 40px;
-            height: 40px;
-            max-width: 40px;
-            max-height: 40px;
-            min-height: 40px;
-            min-width: 40px;
-            margin: 20px 0 20px 20px;
-            cursor: pointer;
-            transition: .2s;
-            border-radius: 4px;
-            object-fit: cover;
-
-            &:hover {
-                -webkit-filter: brightness(0);
-                filter: brightness(0);
-                width: 45px;
-            }
-        }
+    &__fileInputLabel__img {
+        width: 26px;
+        height: 26px;
+        object-fit: contain;
     }
-    
+
     &__btn {
-        width: 35px;
-        height: 35px;
-        margin: 20px 20px 20px 0;
-        transition: $transitionTime;
-        cursor: pointer;
-
-        @media (max-width: 576px) {
-            width: 20px;
-            height: 20px;
-            margin: 10px 10px 10px 0;
-        }
-
-        &:hover {
-            filter: brightness(0%);
-            width: 45px;
-
-            @media (max-width: 576px) {
-                width: 25px;
-            }
-        }
+        padding: 6px;
     }
 }

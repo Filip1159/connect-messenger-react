@@ -4,60 +4,85 @@
 .loginPage {
     background-color: $backgroundColor;
     @include setFlex(column, 1, center, center);
+    padding: 20px;
+    overflow-y: auto;
 
     &__title {
         font-family: "Kanit", sans-serif;
-        font-size: $smallHeaderTextSize;
+        font-size: 28px;
         font-weight: 600;
+        text-align: center;
         color: $secondaryColor;
-        padding-bottom: 30px;
+        padding-bottom: 24px;
 
-        @media (max-width: 576px) {
-            font-size: $messageTextSize;
+        @media (max-width: $phoneBreakpoint) {
+            font-size: 22px;
         }
     }
 
     &__form {
-        @include setFlex(column);
-        font-size: 22px;
-        font-family: "Kanit", sans-serif;
-        color: white;
+        display: flex;
+        flex-direction: column;
+        width: min(380px, 100%);
+        padding: 28px;
+        background: $surfaceColor;
+        border: 1px solid $borderColor;
+        border-radius: 16px;
+        color: $whiteTextColor;
     }
-    
+
     &__label {
-        background: $black;
-        border-radius: 10px;
-        margin: 0 auto 0 10px;
-        padding: 10px 20px;
-        letter-spacing: 1px;
+        margin: 12px 0 6px;
+        font-size: 14px;
+        color: $mutedTextColor;
     }
-    
+
+    &__label:first-child {
+        margin-top: 0;
+    }
+
     &__input {
-        background: $black;
-        font-family: "Kanit", sans-serif;
-        font-size: 22px !important;
-        text-align: center !important;
-        letter-spacing: 1px;
-        padding: 10px 20px !important;
-        margin: 10px;
+        width: 100%;
+        padding: 12px 14px;
+        font-size: 16px;
+    }
+
+    &__input[type="submit"] {
+        margin-top: 22px;
         border: none;
-        outline: none;
+        border-radius: 12px;
+        background: $primaryColor;
+        color: $black;
+        font-weight: 700;
+        text-align: center;
+        cursor: pointer;
+        transition: filter $transitionTime;
+
+        &:hover:not(:disabled) {
+            filter: brightness(1.08);
+        }
+
+        &:disabled {
+            opacity: .6;
+            cursor: default;
+        }
     }
 
     &__authFailed {
-        font-size: $messageTextSize;
-        color: $secondaryColor;
-        margin-top: 20px;
-        letter-spacing: 1px;
+        font-size: 14px;
+        color: $dangerColor;
+        margin-top: 18px;
+        text-align: center;
     }
 }
 
 footer {
-    background: #eee;
+    flex: none;
+    background: $surfaceColor;
+    border-top: 1px solid $borderColor;
     font-size: 13px;
-    font-weight: lighter;
-    color: #555;
+    color: $mutedTextColor;
     text-align: center;
-    padding: 5px;
-    letter-spacing: 1px;
+    padding: 8px 12px;
+    letter-spacing: .5px;
 }

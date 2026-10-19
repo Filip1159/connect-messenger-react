@@ -1,29 +1,40 @@
 @use "./variables" as *;
 
-body {
-    background-color: $primaryColor;
-    font-family: "Lato", sans-serif;
-    margin: 0;
-    height: calc(var(--vh, 1vh) * 100);
-    overflow-y: hidden;
+*, *::before, *::after {
+    box-sizing: border-box;
 }
 
-input[type="text"], input[type="password"], input[type="submit"] {
-    background-color: $inputBackgroundColor;
+body {
+    background-color: $backgroundColor;
+    color: $primaryTextColor;
+    font-family: "Lato", sans-serif;
+    margin: 0;
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+    -webkit-text-size-adjust: 100%;
+}
+
+input[type="text"], input[type="password"], input[type="search"], textarea {
+    background-color: $surfaceRaisedColor;
     color: $inputTextColor;
-    padding: 4px 13px;
-    border: 2px solid $inputBackgroundColor;
-    border-radius: 10px;
+    padding: 8px 14px;
+    border: 1px solid $borderColor;
+    border-radius: 12px;
     outline: none;
     text-align: left;
-    font-size: $inputTextSize;
-    cursor: text;
-    transition: $transitionTime;
+    font-family: inherit;
+    font-size: 16px;  /* 16px keeps iOS from zooming into focused fields */
+    transition: border-color $transitionTime;
 
     &:focus {
-        border-color: $inputBorderColor;
-        transition: $transitionTime;
+        border-color: $primaryColor;
     }
+}
+
+input[type="submit"] {
+    font-family: inherit;
+    cursor: pointer;
 }
 
 ul {
@@ -40,10 +51,35 @@ ul {
 .app__container {
     flex: 1;
     display: flex;
+    min-height: 0;
+
+    /* narrow screens: the chat list and the conversation take turns */
+    @media (max-width: $phoneBreakpoint) {
+        &--list .messages {
+            display: none;
+        }
+
+        &--chat .chatsSection {
+            display: none;
+        }
+    }
 }
+
+button {
+    font-family: inherit;
+}
+
 button:focus-visible,
 [role="button"]:focus-visible,
-input:focus-visible {
-    outline: 2px solid $black;
+input:focus-visible,
+textarea:focus-visible {
+    outline: 2px solid $primaryColor;
     outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        transition-duration: 0s !important;
+        animation-duration: 0s !important;
+    }
 }

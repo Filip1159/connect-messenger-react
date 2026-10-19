@@ -244,13 +244,54 @@ class ChatAPI {
     }
 
     /* resolves with the stored message */
-    static postMessage(chatId: number, type: MessageType, content: string | File) {
+    static postMessage(chatId: number, type: MessageType, content: string | File, replyToId?: number) {
         this.getAuthDetails();
         const formData = new FormData()
         formData.append('chatId', String(chatId))
         formData.append('type', type)
+        if (replyToId !== undefined) formData.append('replyToId', String(replyToId))
         formData.append(type === 'TEXT' ? 'textContent' : 'fileContent', content)
         return api.post<Message>("/message", formData);
+    }
+
+    static async loadMessage(id: number, signal?: AbortSignal): Promise<Message> {
+        this.getAuthDetails();
+        const res = await api.get<Message>(`/message/${id}`, { signal });
+        return res.data;
+    }
+
+    /* my reaction to a message (replaces the previous one); resolves with the updated message */
+    static async react(id: number, emoji: string): Promise<Message> {
+        this.getAuthDetails();
+        const res = await api.put<Message>(`/message/${id}/reaction`, { emoji });
+        return res.data;
+    }
+
+    static async removeReaction(id: number): Promise<Message> {
+        this.getAuthDetails();
+        const res = await api.delete<Message>(`/message/${id}/reaction`);
+        return res.data;
+    }
+
+    /* the author changes the text; resolves with the updated message */
+    static async editMessage(id: number, textContent: string): Promise<Message> {
+        this.getAuthDetails();
+        const res = await api.patch<Message>(`/message/${id}`, { textContent });
+        return res.data;
+    }
+
+    /* soft delete by the author; resolves with the (content-less) message */
+    static async deleteMessage(id: number): Promise<Message> {
+        this.getAuthDetails();
+        const res = await api.delete<Message>(`/message/${id}`);
+        return res.data;
+    }
+
+    /* text messages containing `query`, newest first; `before` is the id of the oldest match already shown */
+    static async searchMessages(chatId: number, query: string, before?: number, signal?: AbortSignal): Promise<Message[]> {
+        this.getAuthDetails();
+        const res = await api.get(`/chats/chat/${chatId}/messages`, { params: { query, before, size: PAGE_SIZE }, signal });
+        return res.data;
     }
 
     static async searchUsersByQuery(query: string, signal?: AbortSignal): Promise<User[]> {

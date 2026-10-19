@@ -1,4 +1,6 @@
 import {useCallback, useEffect, useLayoutEffect, useRef, useState} from "react";
+import { useStore } from "react-redux";
+import type { RootState } from "../../store";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import {selectAuthDetails} from "../../store/auth/authSlice";
 import {markRead, prependMessages, selectActiveChat, selectOutbox} from "../../store/chats/chatsSlice";
@@ -14,12 +16,18 @@ import ChatAPI, { PAGE_SIZE } from "../../store/ChatAPI";
 import { Message } from "./message/Message";
 import { ConversationStatus } from "./conversationStatus/ConversationStatus";
 import { PendingMessage } from "./pendingMessage/PendingMessage";
+import { MessageSearch } from "./messageSearch/MessageSearch";
+
+/* how many pages of history are loaded at most to reach a message found by the search */
+const MAX_JUMP_PAGES = 40;
+const HIGHLIGHT_MS = 2500;
 
 /* closer than this to the bottom (px) counts as reading the newest messages */
 const BOTTOM_TOLERANCE = 40;
 
 export const MessagesSection = () => {
     const dispatch = useAppDispatch();
+    const store = useStore<RootState>();
     const chat = useAppSelector(selectActiveChat);
     const authDetails = useAppSelector(selectAuthDetails);
     const outbox = useAppSelector(selectOutbox);
@@ -30,6 +38,9 @@ export const MessagesSection = () => {
     const [bounds, setBounds] = useState<Bounds | null>(null);  // viewport position of the messages container
     const [viewportHeight, setViewportHeight] = useState(window.innerHeight);
     const [newBelow, setNewBelow] = useState(false);  // messages arrived while the reader was scrolled up
+    const [searchChatId, setSearchChatId] = useState<number | null>(null);  // the chat whose search panel is open
+    const [highlightId, setHighlightId] = useState<number | null>(null);  // message the reader jumped to
+    const [jumpFailed, setJumpFailed] = useState(false);
 
     const contentDisplayerRef = useRef<HTMLDivElement>(null);
     const lastMessageRef = useRef<HTMLDivElement | null>(null);
@@ -91,6 +102,33 @@ export const MessagesSection = () => {
     }, []);
 
     const flagNewBelow = useCallback(() => setNewBelow(true), []);
+
+    /* shows a message found by the search: older pages are loaded until it is there */
+    const jumpTo = async (messageId: number) => {
+        if (chatId === undefined) return;
+        setJumpFailed(false);
+        const known = () => store.getState().chats.chats.find(c => c.id === chatId);
+        for (let page = 0; page < MAX_JUMP_PAGES; page++) {
+            const current = known();
+            if (!current || current.messages.some(m => m.id === messageId)) break;
+            if (current.hasMore === false) break;
+            try {
+                const messages = await ChatAPI.loadMessages(chatId, current.messages[0]?.id);
+                dispatch(prependMessages({ chatId, messages, hasMore: messages.length >= PAGE_SIZE }));
+            } catch (e) {
+                console.error("Failed to load older messages:", e);
+                break;
+            }
+        }
+        if (!known()?.messages.some(m => m.id === messageId)) return setJumpFailed(true);
+        atBottom.current = false;
+        keepScroll.current = null;
+        requestAnimationFrame(() => {
+            document.getElementById(`messageId${messageId}`)?.scrollIntoView({ block: "center" });
+            setHighlightId(messageId);
+            setTimeout(() => setHighlightId(current => current === messageId ? null : current), HIGHLIGHT_MS);
+        });
+    };
 
     /* loads the page of messages older than the oldest one displayed */
     const loadOlder = useCallback(() => {
@@ -191,13 +229,17 @@ export const MessagesSection = () => {
         const reference = recipientLastMessage === m.id ? setLastMessageRef : null;  // inserts lastMessageRef to last message displayed by second user
 
         return (
-            <Message key={m.id} ref={reference} message={m} modifier={modifier} dateFormatter={df}/>
+            <Message key={m.id} ref={reference} message={m} modifier={modifier} dateFormatter={df}
+                     mine={m.userId === authDetails?.id} highlighted={m.id === highlightId} onJump={jumpTo}/>
         );
     });
 
     return (
         <div className="messages">
-            {chat && <ConversationStatus chat={chat}/>}
+            {chat && <ConversationStatus chat={chat} onSearch={() => setSearchChatId(chat.id)}/>}
+            {chat && searchChatId === chat.id &&
+                <MessageSearch key={chat.id} chatId={chat.id} onJump={jumpTo} onClose={() => setSearchChatId(null)}/>}
+            {jumpFailed && <div role="alert" className="messages__notice">{strings.search.notFound}</div>}
             {messageCount > 0 || pending.length > 0 ?
                 <div
                     ref={contentDisplayerRef}

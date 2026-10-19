@@ -1,0 +1,29 @@
+.lightbox {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.85);
+    cursor: zoom-out;
+
+    &__img {
+        max-width: 95vw;
+        max-height: 92vh;
+        object-fit: contain;
+        cursor: default;
+    }
+
+    &__close {
+        position: absolute;
+        top: 12px;
+        right: 18px;
+        border: none;
+        background: none;
+        color: #fff;
+        font-size: 36px;
+        line-height: 1;
+        cursor: pointer;
+    }
+}

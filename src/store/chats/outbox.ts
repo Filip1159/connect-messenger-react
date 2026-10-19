@@ -15,7 +15,7 @@ const send = (dispatch: AppDispatch, item: OutboxItem): Promise<void> => {
         dispatch(outboxRemove(item.localId));
         return Promise.resolve();
     }
-    return ChatAPI.postMessage(item.chatId, item.type, content)
+    return ChatAPI.postMessage(item.chatId, item.type, content, item.replyToId)
         .then(res => {
             files.delete(item.localId);
             dispatch(outboxRemove(item.localId));
@@ -28,13 +28,14 @@ const send = (dispatch: AppDispatch, item: OutboxItem): Promise<void> => {
 };
 
 /* shows the message at once and sends it in the background */
-export const sendMessage = (dispatch: AppDispatch, chatId: number, type: MessageType, content: string | File) => {
+export const sendMessage = (dispatch: AppDispatch, chatId: number, type: MessageType, content: string | File, replyToId?: number) => {
     const item: OutboxItem = {
         localId: `local-${Date.now()}-${counter++}`,
         chatId,
         type,
         content: typeof content === "string" ? content : content.name,
-        status: "sending"
+        status: "sending",
+        replyToId
     };
     if (typeof content !== "string") files.set(item.localId, content);
     dispatch(outboxAdd(item));

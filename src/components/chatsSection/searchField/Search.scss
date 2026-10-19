@@ -1,47 +1,73 @@
 @use "../../../styles/variables" as *;
 @use "../../../styles/mixins" as *;
 
-.search {
-    background: $primaryColor;
-    @include setFlex();
-    font-size: 18px;
-    color: $secondaryTextColor;
-
-    svg {
-        filter: brightness(0);
-        padding: 5px;
-    }
-
-    @media (max-width: 768px) {
-        display: none;
-    }
-
-    &__container {
-        @include setFlex(column, 1);
-    }
-    
-    &__queryInput {
-        margin: 0 3px;
-    }
+.srOnly {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
 }
 
-ul {
-    padding: 0;
-    margin: 0;
-    border: none;
+.search {
+    flex: none;
+    padding: 12px;
+    border-bottom: 1px solid $borderColor;
+    color: $primaryTextColor;
 
-    li {
-        display: block;
-        padding: 2px 20px;
-        border-radius: 4px;
-        cursor: pointer;
-        margin: 2px 6px 0 6px;
-        transition: $transitionTime;
+    &__field {
+        position: relative;
+    }
 
-        &:hover {
-            background: $secondaryColor;
-            color: $primaryTextColor;
-            transition: $transitionTime;
+    &__icon {
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: $mutedTextColor;
+        pointer-events: none;
+    }
+
+    &__queryInput {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 10px 14px 10px 40px !important;
+        font-size: 15px !important;
+        background: $surfaceRaisedColor !important;
+        border: 1px solid transparent !important;
+        border-radius: 20px !important;
+
+        &::placeholder {
+            color: $mutedTextColor;
         }
+    }
+
+    &__queryResult ul {
+        padding: 0;
+        margin: 6px 0 0;
+        border: none;
+
+        li {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 6px 10px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 15px;
+            transition: background $transitionTime;
+
+            &:hover, &:focus-visible {
+                background: $surfaceRaisedColor;
+            }
+        }
+    }
+
+    &__avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        object-fit: cover;
     }
 }

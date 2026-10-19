@@ -9,9 +9,10 @@ import { useAppSelector } from "../../../store/hooks";
 import {selectChats} from "../../../store/chats/chatsSlice";
 import strings from "../../../strings";
 import {activateOnKey} from "../../common/keyboard";
+import Avatar from "../../common/Avatar";
 import {participatesInChat} from "../../../store/chats/chatUtils";
 
-export const Search = ({ roundedCorner }: { roundedCorner: boolean }) => {
+export const Search = () => {
     const [ usersQueryResult, setUsersQueryResult ] = useState<User[]>([]);
     const chats = useAppSelector(selectChats);
 
@@ -52,26 +53,28 @@ export const Search = ({ roundedCorner }: { roundedCorner: boolean }) => {
     }
 
     return (
-        <div className="search" style={{borderBottomRightRadius: roundedCorner ? "20px" : 0}}>
-            <FontAwesomeIcon icon={faSearch} size="5x" />
-            <div className="search__container" >
-                <label htmlFor="user-search">{strings.chats.search}</label>
-                <input id="user-search" type="text" className="search__queryInput" autoComplete="off" onChange={handleInput}/>
-                <div className="search__queryResult">
-                    <ul>{
-                        usersQueryResult.map(u => (
-                            <li
-                                key={u.username}
-                                role="button"
-                                tabIndex={0}
-                                onClick={() => createNewChat(u.id)}
-                                onKeyDown={activateOnKey(() => createNewChat(u.id))}
-                            >
-                                {`${u.name} ${u.surname}`}
-                            </li>
-                        ))
-                    }</ul>
-                </div>
+        <div className="search">
+            <label htmlFor="user-search" className="srOnly">{strings.chats.search}</label>
+            <div className="search__field">
+                <FontAwesomeIcon icon={faSearch} className="search__icon" />
+                <input id="user-search" type="text" className="search__queryInput" autoComplete="off"
+                       placeholder={strings.chats.searchPlaceholder} onChange={handleInput}/>
+            </div>
+            <div className="search__queryResult">
+                <ul>{
+                    usersQueryResult.map(u => (
+                        <li
+                            key={u.username}
+                            role="button"
+                            tabIndex={0}
+                            onClick={() => createNewChat(u.id)}
+                            onKeyDown={activateOnKey(() => createNewChat(u.id))}
+                        >
+                            <Avatar username={u.username} alt="" className="search__avatar"/>
+                            {`${u.name} ${u.surname}`}
+                        </li>
+                    ))
+                }</ul>
             </div>
         </div>
     );
