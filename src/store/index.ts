@@ -3,7 +3,8 @@ import authReducer, { getInitialAuthState, resetDetails } from "./auth/authSlice
 import chatsReducer from "./chats/chatsSlice";
 import settingsReducer, { loadSettings, saveSettings } from "./settings/settingsSlice";
 import uiReducer from "./ui/uiSlice";
-import ChatAPI from "./ChatAPI";
+import { onSignOut } from "../api/session";
+import "./ChatAPI"; // closes the websocket on sign-out
 
 const rootReducer = combineReducers({
     auth: authReducer,
@@ -27,7 +28,7 @@ store.subscribe(() => {
     if (settings !== savedSettings) saveSettings(savedSettings = settings);
 });
 
-/* ChatAPI signs the user out on its own (expired token, 401 response) - keep the store in sync */
-ChatAPI.onSignOut(() => store.dispatch(resetDetails()));
+/* the session ends on its own (expired token, 401 response) - keep the store in sync */
+onSignOut(() => store.dispatch(resetDetails()));
 
 export default store;

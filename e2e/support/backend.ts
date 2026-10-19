@@ -97,7 +97,8 @@ export const mockBackend = async (page: Page, options: BackendOptions = {}): Pro
     const chatOf = (id: number) => backend.chats.find(c => c.id === id);
     const withFlags = (chat: Chat): Chat => ({ adminIds: [], group: false, name: null, archived: false, muted: false, ...chat });
 
-    await page.route("**/api/**", async route => {
+    // only the backend (/api/...), not the app's own modules in src/api/
+    await page.route(url => url.pathname.startsWith("/api/"), async route => {
         const request = route.request();
         const { pathname } = new URL(request.url());
         const path = pathname.replace(/^\/api/, "");

@@ -2,12 +2,12 @@ import { createSlice } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
 import type { AuthDetails } from "../../types";
 import type { RootState } from "../index";
-import ChatAPI from "../ChatAPI";
+import { getAuthDetails } from "../../api/session";
 
 /* the session may already be stored (valid token in localStorage) */
 const loadStoredDetails = (): AuthDetails | null => {
     try {
-        return ChatAPI.getAuthDetails();
+        return getAuthDetails();
     } catch {
         return null;
     }
