@@ -6,6 +6,7 @@ import * as messagesApi from "../../../api/rest/messages";
 import { useAppDispatch, useAppSelector } from "../../../store/hooks";
 import { addMessage, selectActiveChat, setReplyTo } from "../../../store/chats/chatsSlice";
 import { selectAuthDetails } from "../../../store/auth/authSlice";
+import { selectLocale } from "../../../store/settings/settingsSlice";
 import { REACTIONS, ReactionIcon, reactionLabel } from "../../../reactions";
 import strings from "../../../strings";
 import { Linkified } from "../../common/Linkified";
@@ -209,7 +210,8 @@ const useOwnMessageActions = (message: MessageModel) => {
     };
 };
 
-export const Message = React.forwardRef<HTMLDivElement, MessageProps>(function Message({message, modifier, dateFormatter, mine = false, highlighted = false, author, onJump}, ref) {
+export const Message = React.memo(React.forwardRef<HTMLDivElement, MessageProps>(function Message({message, modifier, dateFormatter, mine = false, highlighted = false, author, onJump}, ref) {
+    useAppSelector(selectLocale);  // the memoized row must still redraw its texts when the language changes
     const actions = useOwnMessageActions(message);
     const deleted = message.deleted === true;
     const classes = `singleMessage${modifier}${highlighted ? " singleMessage--highlighted" : ""}${message.reactions?.length ? " singleMessage--reacted" : ""}`;
@@ -278,7 +280,7 @@ export const Message = React.forwardRef<HTMLDivElement, MessageProps>(function M
             {body}
         </>
     );
-});
+}));
 
 type Actions = ReturnType<typeof useOwnMessageActions>;
 

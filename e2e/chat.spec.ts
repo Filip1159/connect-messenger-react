@@ -288,6 +288,21 @@ test.describe("message features", () => {
         await expect(link).toHaveAttribute("rel", /noopener/);
     });
 
+    test("sends an image with a caption: the picture first, then the text", async ({ page }) => {
+        const backend = await mockBackend(page);
+        await page.goto("/");
+
+        await page.locator("#message_img").setInputFiles({ name: "photo.png", mimeType: "image/png", buffer: Buffer.from("png") });
+        await expect(page.getByText("photo.png")).toBeVisible();
+        await page.getByLabel("Message", { exact: true }).fill("look at this");
+        await page.getByRole("button", { name: "Send" }).click();
+
+        await expect.poll(() => backend.posted.messages.map(m => m.type)).toEqual([ "FILE", "TEXT" ]);
+        expect(backend.posted.messages[1]).toMatchObject({ textContent: "look at this" });
+        await expect(page.locator(".singleMessage__img")).toBeVisible();
+        await expect(page.getByText("photo.png")).toHaveCount(0);  // the attachment chip is gone
+    });
+
     test("refuses an attachment that is not an image", async ({ page }) => {
         const backend = await mockBackend(page);
         await page.goto("/");

@@ -1,14 +1,16 @@
-import SockJS from "sockjs-client";
-import { Client } from "@stomp/stompjs";
-import type { IMessage, StompSubscription } from "@stomp/stompjs";
+import { io } from "socket.io-client";
 import type { Chat } from "../types";
-import { baseURL } from "./http";
 import { getToken } from "./token";
 import { currentUserId, getAuthDetails, isSignedIn, onSignOut } from "./session";
+import { CHAT_CHANGED, CHAT_REMOVED, MESSAGE_EVENTS, PRESENCE_CHANGED, STATUS_UPDATED, TYPING } from "./events";
 
-type MessageCallback = (message: IMessage) => void;
+/* the Socket.IO server of the backend has its own port */
+export const socketURL = import.meta.env.VITE_SOCKET_URL || `http://${window.location.hostname}:9092`;
 
-/* messages and read statuses of a chat arrive on separate topics */
+/* what a callback gets: the { type, payload } the backend pushed (see events.ts) */
+type MessageCallback = (event: unknown) => void;
+
+/* what happens in a chat: messages, read statuses and typing */
 export interface ChatCallbacks {
     onMessage: MessageCallback;
     onStatus: MessageCallback;
@@ -41,38 +43,70 @@ export interface Socket {
     sendTyping(chatId: number): void;
 }
 
-/* one websocket connection with its subscriptions; its state lives in the closure */
+const messagesRoom = (chatId: number) => `/topic/messages/${chatId}`;
+const statusRoom = (chatId: number) => `/topic/status/${chatId}`;
+const typingRoom = (chatId: number) => `/topic/typing/${chatId}`;
+const presenceRoom = (userId: number) => `/topic/presence/${userId}`;
+
+/* the chat an event of a chat is about */
+const chatOf = (payload: unknown, type: string): number | undefined => {
+    const body = payload as { chatId?: number; id?: { chatId?: number } } | null;
+    return type === STATUS_UPDATED ? body?.id?.chatId : body?.chatId;
+};
+
+/* one Socket.IO connection with its rooms; its state lives in the closure */
 export const createSocket = (): Socket => {
-    let client: Client | null = null;
+    let client: ReturnType<typeof io> | null = null;
     let handlers: SocketHandlers | null = null;
     let connectedOnce = false;
     const chatCallbacks = new Map<number, ChatCallbacks>(); // chatId -> callbacks
-    const subscriptions = new Map<number, StompSubscription[]>(); // chatId -> STOMP subscriptions of the current connection
+    const followedChats = new Set<number>(); // chats followed on the current connection
     const watchedUsers = new Set<number>(); // users whose presence is followed
-    const presenceSubscriptions = new Map<number, StompSubscription>();
+    const followedUsers = new Set<number>();
 
-    const subscribe = (chatId: number, { onMessage, onStatus, onTyping }: ChatCallbacks) => {
-        if (subscriptions.has(chatId) || !client?.connected) return;
-        subscriptions.set(chatId, [
-            client.subscribe(`/topic/messages/${chatId}`, onMessage),
-            client.subscribe(`/topic/status/${chatId}`, onStatus),
-            client.subscribe(`/topic/typing/${chatId}`, onTyping),
-        ]);
+    const follow = (room: string) => {
+        client?.emit("subscribe", room, (answer: { ok?: boolean } | undefined) => {
+            if (!answer?.ok) console.error("Not allowed to follow", room);
+        });
+    };
+
+    const subscribe = (chatId: number) => {
+        if (followedChats.has(chatId) || !client?.connected) return;
+        followedChats.add(chatId);
+        [ messagesRoom, statusRoom, typingRoom ].forEach(room => follow(room(chatId)));
     };
 
     const subscribePresence = (userId: number) => {
-        if (!handlers || presenceSubscriptions.has(userId) || !client?.connected) return;
-        presenceSubscriptions.set(userId, client.subscribe(`/topic/presence/${userId}`, handlers.onPresence));
+        if (!handlers || followedUsers.has(userId) || !client?.connected) return;
+        followedUsers.add(userId);
+        follow(presenceRoom(userId));
+    };
+
+    /* everything arrives as the event "event"; the type says what it is and the payload which chat it belongs to */
+    const route = (event: unknown) => {
+        const { type, payload } = (event ?? {}) as { type?: string; payload?: unknown };
+        if (typeof type !== "string") return;
+        if (type === PRESENCE_CHANGED) return handlers?.onPresence(event);
+        if (type === CHAT_CHANGED) return handlers?.onNewChat(event);
+        if (type === CHAT_REMOVED) return handlers?.onChatRemoved(event);
+        const chatId = chatOf(payload, type);
+        const callbacks = chatId === undefined ? undefined : chatCallbacks.get(chatId);
+        if (!callbacks) return;
+        if ((MESSAGE_EVENTS as readonly string[]).includes(type)) callbacks.onMessage(event);
+        else if (type === STATUS_UPDATED) callbacks.onStatus(event);
+        else if (type === TYPING) callbacks.onTyping(event);
+        // other types come from a newer backend: ignored
     };
 
     const close = () => {
         if (client) {
-            client.deactivate();
+            client.removeAllListeners();
+            client.disconnect();
             client = null;
         }
         chatCallbacks.clear();
-        subscriptions.clear();
-        presenceSubscriptions.clear();
+        followedChats.clear();
+        followedUsers.clear();
         watchedUsers.clear();
         handlers = null;
         connectedOnce = false;
@@ -91,34 +125,33 @@ export const createSocket = (): Socket => {
             chat.users.filter(u => u.id !== myId).forEach(u => watchedUsers.add(u.id));
         });
 
-        const stomp = new Client({
-            webSocketFactory: () => new SockJS(`${baseURL}/websocket`),
-            reconnectDelay: 5000,
-            // refresh the token before every (re)connect attempt
-            beforeConnect: () => {
-                if (!isSignedIn()) {
-                    stomp.deactivate();
-                    return;
-                }
-                stomp.connectHeaders = { Authentication: getToken() ?? "" };
-            },
-            onConnect: () => {
-                subscriptions.clear();
-                presenceSubscriptions.clear();
-                stomp.subscribe(`/topic/new-chats/${getAuthDetails().id}`, message => handlers?.onNewChat(message));
-                stomp.subscribe(`/topic/removed-chats/${getAuthDetails().id}`, message => handlers?.onChatRemoved(message));
-                chatCallbacks.forEach((chatHandlers, chatId) => subscribe(chatId, chatHandlers));
-                watchedUsers.forEach(subscribePresence);
-                handlers?.onConnection("connected");
-                if (connectedOnce) handlers?.onReconnect();
-                connectedOnce = true;
-            },
-            onStompError: frame => console.error("STOMP error:", frame.headers.message),
-            onWebSocketError: () => console.error("Websocket error"),
-            onWebSocketClose: () => { if (connectedOnce) handlers?.onConnection("reconnecting"); },
+        const connection = io(socketURL, {
+            transports: [ "websocket" ],
+            reconnectionDelay: 1000,
+            reconnectionDelayMax: 5000,
+            // the token is read again for every (re)connect attempt, so a renewed one is used
+            auth: send => send({ token: getToken() ?? "" }),
         });
-        client = stomp;
-        stomp.activate();
+        client = connection;
+
+        connection.on("connect", () => {
+            // a new connection starts without rooms
+            followedChats.clear();
+            followedUsers.clear();
+            follow(`/topic/new-chats/${getAuthDetails().id}`);
+            follow(`/topic/removed-chats/${getAuthDetails().id}`);
+            chatCallbacks.forEach((_, chatId) => subscribe(chatId));
+            watchedUsers.forEach(subscribePresence);
+            handlers?.onConnection("connected");
+            if (connectedOnce) handlers?.onReconnect();
+            connectedOnce = true;
+        });
+        connection.on("event", route);
+        connection.on("disconnect", () => { if (connectedOnce) handlers?.onConnection("reconnecting"); });
+        connection.on("connect_error", error => {
+            console.error("Websocket error:", error.message);
+            if (!isSignedIn()) connection.disconnect();
+        });
     };
 
     return {
@@ -132,21 +165,21 @@ export const createSocket = (): Socket => {
                 throw new Error("Websocket connection doesn't exists. Call connect() first.");
             }
             chatCallbacks.set(chatId, callbacks);
-            subscribe(chatId, callbacks); // if not connected yet, onConnect subscribes it
+            subscribe(chatId); // if not connected yet, "connect" subscribes it
         },
         unsubscribeChat(chatId) {
             chatCallbacks.delete(chatId);
-            subscriptions.get(chatId)?.forEach(s => s.unsubscribe());
-            subscriptions.delete(chatId);
+            followedChats.delete(chatId);
+            [ messagesRoom, statusRoom, typingRoom ].forEach(room => client?.emit("unsubscribe", room(chatId)));
         },
         watchUser(userId) {
             if (userId === currentUserId()) return;
             watchedUsers.add(userId);
-            subscribePresence(userId); // if not connected yet, onConnect subscribes it
+            subscribePresence(userId); // if not connected yet, "connect" subscribes it
         },
         sendTyping(chatId) {
             if (!client?.connected) return;
-            client.publish({ destination: `/app/chats/${chatId}/typing` });
+            client.emit("typing", chatId);
         },
     };
 };

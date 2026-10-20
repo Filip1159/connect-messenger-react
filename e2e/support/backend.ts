@@ -106,7 +106,7 @@ export const mockBackend = async (page: Page, options: BackendOptions = {}): Pro
         const method = request.method();
         backend.requests.push(`${method} ${path}`);
 
-        if (path.startsWith("/websocket")) return route.fulfill({ status: 404 });
+        
 
         if (method === "POST" && path === "/login") {
             const { username, password: given } = request.postDataJSON();
@@ -210,6 +210,9 @@ export const mockBackend = async (page: Page, options: BackendOptions = {}): Pro
             return avatarKey && Number(avatar[1]) === ME.id
                 ? route.fulfill({ status: 200, contentType: "image/png", body: PNG })
                 : route.fulfill({ status: 404 });
+        }
+        if (method === "GET" && path === "/messages/files/stored-photo.png") {
+            return route.fulfill({ status: 200, contentType: "image/png", body: PNG });
         }
         if (method === "GET" && path === "/users/blocked") return json(route, backend.blocked);
         const block = path.match(/^\/users\/(\d+)\/block$/);
@@ -316,6 +319,10 @@ export const mockBackend = async (page: Page, options: BackendOptions = {}): Pro
                 return route.fulfill({ status: 500 });
             }
             const created = makeMessage(nextMessageId++, Number(fields.chatId), ME.id, fields.textContent ?? "", "2021-05-04T12:05:00");
+            if (fields.type === "FILE") {
+                created.type = "FILE";
+                created.content = "stored-photo.png";
+            }
             if (fields.replyToId) created.replyToId = Number(fields.replyToId);
             return json(route, created);
         }

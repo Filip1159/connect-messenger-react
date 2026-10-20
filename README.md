@@ -1,18 +1,33 @@
-### >>> <i>CONNECT</i> messenger
-Just a small project, which helped me learn React. [Server side app](https://github.com/Filip1159/connect-messenger-java) written using Java and Spring Boot.
+# >>> *CONNECT* messenger
 
-#### Development
-Built with [Vite](https://vite.dev).
+A real-time chat: talk one-to-one or in groups, send photos, react to messages with emoji, edit or delete them, and see who is online, who is typing and who has read what. It comes with a dark and a light theme, several languages, desktop notifications and profile pictures. This is the web app (React); the server lives in [connect-messenger-java](https://github.com/Filip1159/connect-messenger-java).
 
-| Command | |
-|---|---|
-| `npm install` | install dependencies |
-| `npm run dev` | start the dev server on http://localhost:3000 |
-| `npm run build` | type-check, then production build into `build/` |
-| `npm run typecheck` | TypeScript only (`tsc --noEmit`) |
-| `npm run lint` | ESLint |
-| `npm test` | unit and component tests (Vitest) |
-| `npm run test:e2e` | browser tests (Playwright, backend mocked; starts its own dev server on port 3100) |
-| `npm run test:e2e:ui` | the same in Playwright's interactive UI |
+## Screenshots
 
-The backend URL defaults to `http://<current hostname>:8080`. Override it with `VITE_API_URL` (e.g. in `.env.local`).
+<p align="center">
+  <img src="docs/screenshots/login.png" width="48%" alt="Sign in">
+  <img src="docs/screenshots/conversation-dark.png" width="48%" alt="A conversation in the dark theme">
+</p>
+<p align="center">
+  <img src="docs/screenshots/group.png" width="48%" alt="A group chat">
+  <img src="docs/screenshots/conversation-light.png" width="48%" alt="The light theme">
+</p>
+<p align="center">
+  <img src="docs/screenshots/settings.png" width="48%" alt="Settings">
+</p>
+
+```sh
+npm install        # install dependencies
+```
+
+```sh
+npm run dev        # start the app on http://localhost:3000
+```
+
+```sh
+npm test           # run the tests
+```
+
+```sh
+npm run build      # production build
+```

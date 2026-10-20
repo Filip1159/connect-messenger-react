@@ -18,6 +18,6 @@ export default defineConfig({
         url: `http://localhost:${PORT}`,
         reuseExistingServer: !process.env.CI,
         // same origin as the app, so the mocked backend needs no CORS handling
-        env: { VITE_API_URL: `http://localhost:${PORT}/api`, BROWSER: "none" },
+        env: { VITE_API_URL: `http://localhost:${PORT}/api`, VITE_SOCKET_URL: "http://localhost:9", BROWSER: "none" },
     },
 });

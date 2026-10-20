@@ -7,7 +7,6 @@
     "@fortawesome/free-solid-svg-icons": "^7.3.1",
     "@fortawesome/react-fontawesome": "^3.5.0",
     "@reduxjs/toolkit": "^2.13.0",
-    "@stomp/stompjs": "^7.5.0",
     "axios": "^1.20.0",
     "jwt-decode": "^4.0.0",
     "react": "^19.3.1",
@@ -15,7 +14,7 @@
     "react-redux": "^9.3.0",
     "react-router-dom": "^7.18.4",
     "sass": "^1.105.2",
-    "sockjs-client": "^1.6.1"
+    "socket.io-client": "^4.8.4"
   },
   "scripts": {
     "start": "vite",
@@ -27,7 +26,9 @@
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "test:e2e": "playwright test",
-    "test:e2e:ui": "playwright test --ui"
+    "test:e2e:ui": "playwright test --ui",
+    "gen:api": "npx --yes openapi-typescript@7.13.0 src/api/openapi.json -o src/api/schema.d.ts",
+    "screenshots": "SCREENSHOTS=1 playwright test e2e/screenshots.spec.ts"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
@@ -38,7 +39,6 @@
     "@types/node": "^26.6.5",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
-    "@types/sockjs-client": "^1.5.4",
     "@vitejs/plugin-react": "^6.1.2",
     "eslint": "^9.39.5",
     "eslint-plugin-react": "^7.37.5",

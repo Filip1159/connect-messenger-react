@@ -1,10 +1,10 @@
+import { formatterFor } from "./formatterFor";
 import {useCallback, useEffect, useLayoutEffect, useRef, useState} from "react";
 import { useStore } from "react-redux";
 import type { RootState } from "../../store";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import {selectAuthDetails} from "../../store/auth/authSlice";
 import {markRead, prependMessages, selectActiveChat, selectOutbox} from "../../store/chats/chatsSlice";
-import DateFormatter from "../../DateFormatter";
 import "./MessagesSection.scss";
 import NewMessageInput from "./newMessageInput/NewMessageInput";
 import useLastMessage from "./hooks/useLastMessage";
@@ -111,7 +111,7 @@ export const MessagesSection = () => {
     const flagNewBelow = useCallback(() => setNewBelow(true), []);
 
     /* shows a message found by the search: older pages are loaded until it is there */
-    const jumpTo = async (messageId: number) => {
+    const jumpTo = useCallback(async (messageId: number) => {
         if (chatId === undefined) return;
         setJumpFailed(false);
         const known = () => store.getState().chats.chats.find(c => c.id === chatId);
@@ -135,7 +135,7 @@ export const MessagesSection = () => {
             setHighlightId(messageId);
             setTimeout(() => setHighlightId(current => current === messageId ? null : current), HIGHLIGHT_MS);
         });
-    };
+    }, [chatId, store, dispatch]);
 
     /* loads the page of messages older than the oldest one displayed */
     const loadOlder = useCallback(() => {
@@ -242,11 +242,7 @@ export const MessagesSection = () => {
         const activeMessages = chat.messages;
         const len = activeMessages.length;
 
-        const date = DateFormatter.sqlToDateObject(m.time);
-        const prevDate = i === 0 ? null : DateFormatter.sqlToDateObject(activeMessages[i - 1].time);
-        const nextDate = i === len - 1 ? null : DateFormatter.sqlToDateObject(activeMessages[i + 1].time);
-
-        const df = new DateFormatter(prevDate, date, nextDate);
+        const df = formatterFor(activeMessages, i);
 
         /* check who wrote this message */
         let modifier = m.userId === authDetails?.id ? " singleMessage--myMsg" : " singleMessage--receivedMsg";

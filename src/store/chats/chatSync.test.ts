@@ -4,7 +4,6 @@ import { makeStore } from "../index";
 import { createChatSync } from "./chatSync";
 import type { ChatSyncApi } from "./chatSync";
 import type { ChatCallbacks, Socket, SocketHandlers } from "../../api/socket";
-import type { IMessage } from "@stomp/stompjs";
 import type { Message } from "../../types";
 import { makeChat } from "../../test/fixtures";
 
@@ -28,7 +27,9 @@ const sock = {
     sendTyping: vi.fn()
 } satisfies Record<keyof Socket, unknown>;
 const me = { id: 1, username: "user1", name: "Name1", surname: "Surname1", exp: 0 };
-const frame = (body: unknown) => ({ body: JSON.stringify(body) }) as IMessage;
+const raw = (body: unknown) => body;
+/* what the backend sends: { type, payload } */
+const frame = (type: string, payload: unknown) => raw({ type, payload });
 const msg = (id: number, chatId: number, userId: number): Message =>
     ({ id, chatId, userId, type: "TEXT", content: `m${id}`, time: "2021-01-01T10:00:00" });
 
@@ -83,7 +84,7 @@ describe("chat sync", () => {
         const { store, handlers } = await start();
         api.loadMessages.mockResolvedValue([ msg(7, 5, 2) ]);
 
-        await handlers.onNewChat(frame({ ...makeChat(5, null, { users: [ 1, 2, 3 ] }), group: true, name: "Team" }));
+        await handlers.onNewChat(frame("chat.changed", { ...makeChat(5, null, { users: [ 1, 2, 3 ] }), group: true, name: "Team" }));
 
         const group = store.getState().chats.chats.find(c => c.id === 5)!;
         expect(group).toMatchObject({ group: true, name: "Team" });
@@ -94,7 +95,7 @@ describe("chat sync", () => {
     it("updates a known chat instead of replacing it (the messages stay)", async () => {
         const { store, handlers } = await start();
 
-        await handlers.onNewChat(frame({ ...makeChat(1, null, { users: [ 1, 2, 3 ] }), group: true, name: "Renamed", adminIds: [ 1 ] }));
+        await handlers.onNewChat(frame("chat.changed", { ...makeChat(1, null, { users: [ 1, 2, 3 ] }), group: true, name: "Renamed", adminIds: [ 1 ] }));
 
         const chat = store.getState().chats.chats.find(c => c.id === 1)!;
         expect(chat).toMatchObject({ name: "Renamed", adminIds: [ 1 ] });
@@ -105,7 +106,7 @@ describe("chat sync", () => {
     it("drops a chat I was removed from and stops following it", async () => {
         const { store, handlers } = await start();
 
-        handlers.onChatRemoved(frame({ chatId: 1 }));
+        handlers.onChatRemoved(frame("chat.removed", { chatId: 1 }));
 
         expect(store.getState().chats.chats).toEqual([]);
         expect(sock.unsubscribeChat).toHaveBeenCalledWith(1);
@@ -121,16 +122,57 @@ describe("chat sync", () => {
 
     it("counts live messages of others as unread, but not my own", async () => {
         const { store, callbacks } = await start();
-        callbacks.onMessage(frame(msg(3, 1, 2)));
-        callbacks.onMessage(frame(msg(4, 1, 1)));
+        callbacks.onMessage(frame("message.created", msg(3, 1, 2)));
+        callbacks.onMessage(frame("message.created", msg(4, 1, 1)));
         expect(store.getState().chats.chats[0].unreadCount).toBe(1);
+    });
+
+    it("treats edits, reactions and deletions of known messages as updates, not as new messages", async () => {
+        const { store, callbacks } = await start();
+        const known = store.getState().chats.chats[0].messages[0];
+        const unreadBefore = store.getState().chats.chats[0].unreadCount;
+
+        callbacks.onMessage(frame("message.edited", { ...known, userId: 2, content: "changed", editedAt: "2021-01-01T11:00:00" }));
+        callbacks.onMessage(frame("message.reacted", { ...known, userId: 2, content: "changed", reactions: [ { userId: 2, emoji: "👍" } ] }));
+
+        const chat = store.getState().chats.chats[0];
+        expect(chat.messages.find(m => m.id === known.id)).toMatchObject({ content: "changed" });
+        expect(chat.unreadCount).toBe(unreadBefore);
+        callbacks.onMessage(frame("message.deleted", { ...known, userId: 2, content: null, deletedAt: "2021-01-01T12:00:00" }));
+        expect(store.getState().chats.chats[0].messages.find(m => m.id === known.id)).toMatchObject({ deletedAt: "2021-01-01T12:00:00" });
+    });
+
+    it("applies read statuses and presence only from events of their own type", async () => {
+        const { store, callbacks, handlers } = await start();
+
+        callbacks.onStatus(frame("status.updated", { id: { chatId: 1, userId: 2 }, messageId: 2 }));
+        expect(store.getState().chats.chats[0].status.find(s => s.id.userId === 2)?.messageId).toBe(2);
+
+        handlers.onPresence(frame("presence.changed", { userId: 2, online: false, lastSeen: "2021-01-01T10:00:00" }));
+        expect(store.getState().chats.presence[2]?.online).toBe(false);
+
+        callbacks.onStatus(frame("typing", { id: { chatId: 1, userId: 2 }, messageId: 1 }));  // the wrong type for this topic
+        expect(store.getState().chats.chats[0].status.find(s => s.id.userId === 2)?.messageId).toBe(2);
+    });
+
+    it("skips unknown event types and survives malformed frames", async () => {
+        const { store, callbacks } = await start();
+        const error = vi.spyOn(console, "error").mockImplementation(() => {});
+
+        callbacks.onMessage(frame("message.pinned", msg(9, 1, 2)));
+        callbacks.onMessage(raw(msg(10, 1, 2)));  // an old style frame without the envelope
+        callbacks.onMessage("not an envelope");
+
+        expect(store.getState().chats.chats[0].messages.map(m => m.id)).toEqual([ 1, 2 ]);
+        expect(error).toHaveBeenCalledTimes(2);  // the unknown type is not an error
+        error.mockRestore();
     });
 
     it("shows who is typing and ignores my own typing", async () => {
         const { store, callbacks } = await start();
-        callbacks.onTyping(frame({ chatId: 1, userId: 1 }));
+        callbacks.onTyping(frame("typing", { chatId: 1, userId: 1 }));
         expect(store.getState().chats.typing[1] ?? []).toEqual([]);
-        callbacks.onTyping(frame({ chatId: 1, userId: 2 }));
+        callbacks.onTyping(frame("typing", { chatId: 1, userId: 2 }));
         expect(store.getState().chats.typing[1]).toEqual([ 2 ]);
     });
 

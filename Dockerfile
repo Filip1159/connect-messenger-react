@@ -6,6 +6,9 @@ COPY . .
 # the API url is baked into the bundle; without it the app calls the same host on port 8080
 ARG VITE_API_URL=""
 ENV VITE_API_URL=$VITE_API_URL
+# the Socket.IO server of the backend; without it the app uses the same host on port 9092
+ARG VITE_SOCKET_URL=""
+ENV VITE_SOCKET_URL=$VITE_SOCKET_URL
 RUN npm run build
 
 FROM nginx:1.27-alpine

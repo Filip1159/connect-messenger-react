@@ -1,4 +1,3 @@
-import type { IMessage } from "@stomp/stompjs";
 import type { AppDispatch, RootState } from "../index";
 import type { Chat, ChatStatus, Message, Presence } from "../../types";
 import { updateDetails } from "../auth/authSlice";
@@ -6,6 +5,7 @@ import {
     addChat, addMessage, removeChat, setBlocked, setChats, setPresence, setTyping, syncChats, updatePresence, updateStatus, upsertChat, updateUser
 } from "./chatsSlice";
 import type { Socket } from "../../api/socket";
+import { CHAT_CHANGED, CHAT_REMOVED, MESSAGE_EVENTS, parseEvent, PRESENCE_CHANGED, STATUS_UPDATED, TYPING } from "../../api/events";
 import { PAGE_SIZE } from "../../api/rest/chats";
 import type * as chatsApi from "../../api/rest/chats";
 import type * as usersApi from "../../api/rest/users";
@@ -40,36 +40,33 @@ export interface ChatSyncDeps {
 export const createChatSync = ({ dispatch, getState, myId, api, socket }: ChatSyncDeps) => ({
     start: (): (() => void) => {
 
-        /* the backend payload is trusted to have the declared shape */
-        const parse = <T>(incoming: IMessage): T | null => {
-            try {
-                return JSON.parse(incoming.body) as T;
-            } catch (e) {
-                console.error("Malformed websocket message:", e);
-                return null;
-            }
-        };
+        /* the payload of an event of one of the accepted types; it is trusted to have the declared shape */
+        const parse = <T>(incoming: unknown, ...types: readonly string[]): { type: string; payload: T } | null =>
+            parseEvent<T>(incoming, types);
 
         const typingTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
-        const onMessage = (incoming: IMessage) => {
-            const parsed = parse<Message>(incoming);
-            if (!parsed) return;
+        const onMessage = (incoming: unknown) => {
+            const event = parse<Message>(incoming, ...MESSAGE_EVENTS);
+            if (!event) return;
+            const parsed = event.payload;
             const state = getState();
             const chat = state.chats.chats.find(c => c.id === parsed.chatId);
-            const isNew = !!chat && !chat.messages.some(m => m.id === parsed.id);  // not an edit, a reaction or a duplicate
+            // only a created message that isn't known yet (not an edit, a reaction, a deletion or a duplicate) is news
+            const isNew = event.type === "message.created" && !!chat && !chat.messages.some(m => m.id === parsed.id);
             dispatch(addMessage(parsed, parsed.userId !== myId));
             if (chat && isNew) handleIncoming(dispatch, state, chat, parsed, myId);
         };
 
-        const onStatus = (incoming: IMessage) => {
-            const parsed = parse<ChatStatus>(incoming);
-            if (parsed) dispatch(updateStatus(parsed));
+        const onStatus = (incoming: unknown) => {
+            const event = parse<ChatStatus>(incoming, STATUS_UPDATED);
+            if (event) dispatch(updateStatus(event.payload));
         };
 
-        const onTyping = (incoming: IMessage) => {
-            const parsed = parse<TypingEvent>(incoming);
-            if (!parsed || parsed.userId === myId) return;
+        const onTyping = (incoming: unknown) => {
+            const event = parse<TypingEvent>(incoming, TYPING);
+            if (!event || event.payload.userId === myId) return;
+            const parsed = event.payload;
             const key = `${parsed.chatId}:${parsed.userId}`;
             clearTimeout(typingTimers.get(key));
             dispatch(setTyping({ ...parsed, active: true }));
@@ -80,9 +77,9 @@ export const createChatSync = ({ dispatch, getState, myId, api, socket }: ChatSy
         };
         const callbacks = { onMessage, onStatus, onTyping };
 
-        const onPresence = (incoming: IMessage) => {
-            const parsed = parse<Presence>(incoming);
-            if (parsed) dispatch(updatePresence(parsed));
+        const onPresence = (incoming: unknown) => {
+            const event = parse<Presence>(incoming, PRESENCE_CHANGED);
+            if (event) dispatch(updatePresence(event.payload));
         };
 
         const loadPresence = () => api.loadPresence()
@@ -107,9 +104,10 @@ export const createChatSync = ({ dispatch, getState, myId, api, socket }: ChatSy
         };
 
         /* a chat of mine that is new to me (created, or I was added to it) is loaded with its latest messages; a known one is only updated */
-        const onNewChat = async (incoming: IMessage) => {
-            const parsedChat = parse<Chat>(incoming);
-            if (!parsedChat) return;
+        const onNewChat = async (incoming: unknown) => {
+            const event = parse<Chat>(incoming, CHAT_CHANGED);
+            if (!event) return;
+            const parsedChat = event.payload;
             if (getState().chats.chats.some(c => c.id === parsedChat.id)) {
                 dispatch(upsertChat(parsedChat));
                 parsedChat.users.forEach(u => socket.watchUser(u.id));
@@ -121,11 +119,11 @@ export const createChatSync = ({ dispatch, getState, myId, api, socket }: ChatSy
         };
 
         /* I left a group or an admin removed me */
-        const onChatRemoved = (incoming: IMessage) => {
-            const removed = parse<{ chatId: number }>(incoming);
-            if (!removed) return;
-            socket.unsubscribeChat(removed.chatId);
-            dispatch(removeChat(removed.chatId));
+        const onChatRemoved = (incoming: unknown) => {
+            const event = parse<{ chatId: number }>(incoming, CHAT_REMOVED);
+            if (!event) return;
+            socket.unsubscribeChat(event.payload.chatId);
+            dispatch(removeChat(event.payload.chatId));
         };
 
         /* messages that arrived while the connection was down, oldest first */
